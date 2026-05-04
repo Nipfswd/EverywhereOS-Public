@@ -24,6 +24,35 @@ Environment:
 
 #include "ke.h"
 
+/*
+// 8254 PIT channel 0 port addresses and programming constants.
+// Channel 0 drives IRQ0 at the configured tick rate.
+//
+// PERFORMANCE_FREQUENCY is the native 8254 input frequency (1.193182 MHz).
+// HALP_CLOCK_RATE_HZ is our desired interrupt rate (100 Hz = 10 ms per tick).
+// The divisor loaded into the PIT is PERFORMANCE_FREQUENCY / HALP_CLOCK_RATE_HZ.
+*/
+
+#define HALP_PIT_DATA_PORT0       0x40
+#define HALP_PIT_CONTROL_PORT     0x43
+#define HALP_PIT_CMD_COUNTER0     0x00
+#define HALP_PIT_CMD_RW_16BIT     0x30
+#define HALP_PIT_CMD_MODE2        0x04
+#define HALP_PIT_CMD_BINARY       0x00
+#define HALP_PERFORMANCE_FREQ     1193182UL
+#define HALP_CLOCK_RATE_HZ        100
+#define HALP_CLOCK_DIVISOR        (HALP_PERFORMANCE_FREQ / HALP_CLOCK_RATE_HZ)
+
+/*
+// HalpTickCount is the raw count of IRQ0 clock ticks since PIT
+// initialization.  It is incremented by HalpClockIsr on every tick and
+// read by HalQueryTickCount / HalStallExecution.
+//
+// volatile so the compiler never caches a stale read in a polling loop.
+*/
+
+static volatile uint32_t HalpTickCount = 0;
+
 /* IDT gate descriptor */
 struct idt_entry {
     uint16_t offset_lo;
@@ -123,6 +152,127 @@ Return Value:
 
 --*/
 
+/*++
+
+Routine Description:
+
+    Programs 8254 PIT channel 0 to fire IRQ0 at HALP_CLOCK_RATE_HZ using
+    mode 2 (rate generator).  The 16-bit divisor is written LSB-first,
+    MSB-second per Intel 8254 protocol.
+
+Arguments:
+
+    None.
+
+Return Value:
+
+    None.
+
+--*/
+
+static void HalpInitializePit(void) {
+    uint16_t divisor = (uint16_t)HALP_CLOCK_DIVISOR;
+
+    outb(HALP_PIT_CONTROL_PORT,
+         HALP_PIT_CMD_COUNTER0 |
+         HALP_PIT_CMD_RW_16BIT |
+         HALP_PIT_CMD_MODE2    |
+         HALP_PIT_CMD_BINARY);
+
+    outb(HALP_PIT_DATA_PORT0, (uint8_t)(divisor & 0xFF));
+    outb(HALP_PIT_DATA_PORT0, (uint8_t)((divisor >> 8) & 0xFF));
+}
+
+/*++
+
+Routine Description:
+
+    C-level IRQ0 clock interrupt service routine.  Called from the
+    Irq0Stub assembly thunk on every PIT tick.  Increments the global
+    tick counter.  EOI is issued by the assembly stub after this
+    function returns.
+
+Arguments:
+
+    None.
+
+Return Value:
+
+    None.
+
+Environment:
+
+    Kernel-mode only.  Interrupts are disabled on entry (interrupt gate).
+
+--*/
+
+void HalpClockIsr(void) {
+    HalpTickCount++;
+}
+
+/*++
+
+Routine Description:
+
+    Returns the current raw tick count since PIT initialization.
+    Each tick represents 1000 / HALP_CLOCK_RATE_HZ milliseconds
+    (10 ms at 100 Hz).
+
+Arguments:
+
+    None.
+
+Return Value:
+
+    Current tick count (uint32_t).
+
+--*/
+
+uint32_t HalQueryTickCount(void) {
+    return HalpTickCount;
+}
+
+/*++
+
+Routine Description:
+
+    Busy-waits for at least the requested number of milliseconds by
+    polling the PIT-driven tick counter.  Because HalpTickCount advances
+    at HALP_CLOCK_RATE_HZ ticks per second, one tick equals
+    1000/HALP_CLOCK_RATE_HZ ms.  We over-approximate by waiting an extra
+    tick to guarantee the full interval has elapsed regardless of where
+    in the current tick period we start.
+
+Arguments:
+
+    Milliseconds - Minimum number of milliseconds to stall.
+
+Return Value:
+
+    None.
+
+Environment:
+
+    Caller must be running with interrupts enabled so the tick ISR fires.
+
+--*/
+
+void HalStallExecution(uint32_t Milliseconds) {
+    uint32_t TicksNeeded;
+    uint32_t Deadline;
+
+    //
+    // Convert the requested millisecond count to ticks, rounding up.
+    // The +1 adds a guard tick to cover partial periods at both ends.
+    //
+    TicksNeeded = (Milliseconds * HALP_CLOCK_RATE_HZ + 999) / 1000 + 1;
+    Deadline    = HalpTickCount + TicksNeeded;
+
+    while (HalpTickCount < Deadline) {
+        __asm__ __volatile__("pause");
+    }
+}
+
 void HalEndOfInterrupt(uint8_t irq) {
     if (irq >= 8) {
         outb(0xA0, 0x20);
@@ -149,6 +299,7 @@ Return Value:
 --*/
 
 void HalInitInterrupts(void) {
+    extern void Irq0Stub(void);
     extern void Irq12Stub(void);
     extern void IrqIgnoreStub(void);
 
@@ -164,6 +315,9 @@ void HalInitInterrupts(void) {
     outb(0x21, 0xFF);
     outb(0xA1, 0xFF);
 
+    /* Install clock ISR (IRQ0 = vector 0x20) */
+    IdtSetGate(0x20, (uint32_t)Irq0Stub, 0x08, 0x8E);
+
     /* Install mouse ISR (IRQ12 = vector 0x2C) */
     IdtSetGate(0x2C, (uint32_t)Irq12Stub, 0x08, 0x8E);
 
@@ -172,8 +326,11 @@ void HalInitInterrupts(void) {
     idtp.base  = (uint32_t)&idt;
     __asm__ __volatile__("lidt %0" : : "m"(idtp));
 
-    /* Unmask IRQ2 (cascade) and IRQ12 (mouse) only */
-    outb(0x21, 0xFB);   /* master: only IRQ2 unmasked */
+    /* Program the PIT before unmasking IRQ0 so the first tick lands clean */
+    HalpInitializePit();
+
+    /* Unmask IRQ0 (clock), IRQ2 (cascade), and IRQ12 (mouse) */
+    outb(0x21, 0xFA);   /* master: IRQ0 and IRQ2 unmasked (bit 0 and bit 2 clear) */
     outb(0xA1, 0xEF);   /* slave:  only IRQ12 unmasked */
 
     /* Enable interrupts */

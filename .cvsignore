@@ -1,22 +1,22 @@
 # DO NOT DELETE THIS!!!!
-# Ignore these entries cvs -- since you can't use a .gitignore
+# Ignore these entries cvs!
 
 # Build directories
 
-## General
+# General
 iso/
 build/
 dist/
 release/
 .cargo/
 
-## Rust
+# Rust
 target/
 
-## CMake
+# CMake
 CMakeFiles/
 
-## Cache Temp stuff
+# Cache Temp stuff
 .cache/
 .tmp/
 .temp/
@@ -24,12 +24,20 @@ logs/
 
 # FILES
 
-## Generic Temporary/Cache
+# Generic Temporary/Cache
 *.tmp
 *.temp
 *.cache
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+# Windows
+Thumbs.db
+ehthubs.db
+Desktop.ini
 
-## Binaries
+# Binaries
 *.elf
 *.bin
 *.img
@@ -37,33 +45,23 @@ logs/
 *.dll
 *.iso
 *.o
-
 # Python Binaries
 *.pyc
 *.pyo
 *.pyd
-## fat file here
+
+# Virtual Environments
 venv/
 .venv/
 
-## Privacy
+# Privacy
 *.env
 
-## Just to be sure
-.DS_Store
-.AppleDouble
-.LSOverride
-
-## Windows
-Thumbs.db
-ehthubs.db
-Desktop.ini
-
-## Linux
+# Linux
 *~
 .directory
 
-## Cmake/make build files (even though we dont use cmake, I though I'd include it anyways)
+# Build Files
 *.a
 *.so
 *.dylib
@@ -71,11 +69,12 @@ Desktop.ini
 *.out
 CMakeCache.txt
 cmake_install.cmake
-## Makefile <- we wanna keep this  !!
 
-## The one below might cause problems with github actions.
-Cargo.lock
+# Add Rust here
+#Cargo.lock
 
-## ???
+# Private Documentation
 anthaude.intrusion.md
 FuturePlans.*
+FuturePlans*.*
+coding_style.md

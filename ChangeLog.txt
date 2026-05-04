@@ -68,3 +68,6 @@ Features
 00035 No regression test suite exists -- pool bugs from future commits would go undetected; added base/ntos/mm/tests/ containing a standalone bare-metal test kernel (entry.asm + mmtest.c); 20 test cases across five groups (allocation fundamentals, pool statistics, coalescing, structural invariants, exhaustion/recovery) exercise MmAllocatePool and MmFreePool with MM_POOL_TAG sentinels and report PASS/FAIL over COM1 serial port; runs under QEMU -nographic via 'make test'
 (explorer)
 00035 No file browser window existed - added Files window (shell/explorer/files.c) showing EVRYFS directory listing with filename and size per row; accessible via files shell command or taskbar
+
+(hal)
+00036 Busy-wait delay loops in kernelMain used volatile NOP spins with no hardware basis - replaced with PIT-driven HalStallExecution; added HalpInitializePit (8254 channel 0 mode 2, 100 Hz), HalpClockIsr C handler, HalQueryTickCount, and Irq0Stub in base/hals/halx86/i386/ixclock.asm; IRQ0 unmasked in HalInitInterrupts alongside IRQ12

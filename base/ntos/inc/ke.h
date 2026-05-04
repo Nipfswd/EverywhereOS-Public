@@ -105,8 +105,10 @@ void MouseIsr(void);
 
 /* ********** HAL ********** */
 
-void HalInitInterrupts(void);
-void HalEndOfInterrupt(uint8_t irq);
+void     HalInitInterrupts(void);
+void     HalEndOfInterrupt(uint8_t irq);
+uint32_t HalQueryTickCount(void);
+void     HalStallExecution(uint32_t Milliseconds);
 
 /* ********** Keyboard ********** */
 

@@ -54,7 +54,7 @@ void kernelMain(uint32_t* mbi) {
     EvryFsInit();
 
     DrawBootScreen();
-    for (volatile int d = 0; d < 2000000; d++) { __asm__ __volatile__("nop"); }
+    HalStallExecution(2000);
 
     while (1) {
         last_scancode = 0;
@@ -95,6 +95,6 @@ void kernelMain(uint32_t* mbi) {
         DrawMouseCursor();
         FlipBuffers();
 
-        for (volatile int d = 0; d < 30000; d++) { __asm__ __volatile__("nop"); }
+        HalStallExecution(10);
     }
 }

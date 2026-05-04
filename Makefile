@@ -37,8 +37,10 @@ MM_SRC = base/ntos/mm/mminit.c \
 FS_SRC = base/fs/evryfs/ata.c \
          base/fs/evryfs/evryfs.c
 HAL_SRC = base/hals/halx86/halinit.c
-HAL_ASM_SRC = base/hals/halx86/irq12.asm
-HAL_ASM_OBJ = $(BUILD)/base/hals/halx86/irq12.o
+HAL_ASM_SRC = base/hals/halx86/irq12.asm \
+              base/hals/halx86/i386/ixclock.asm
+HAL_ASM_OBJ = $(BUILD)/base/hals/halx86/irq12.o \
+              $(BUILD)/base/hals/halx86/i386/ixclock.o
 
 # Shell / Explorer (userspace)
 SHELL_SRC = shell/explorer/desktop.c \
@@ -96,7 +98,11 @@ $(ENTRY_OBJ): $(ENTRY_SRC)
 $(BUILD)/%.o: %.c
 	$(CC) $(CFLAGS) $< -o $@
 
-$(HAL_ASM_OBJ): $(HAL_ASM_SRC)
+$(BUILD)/base/hals/halx86/irq12.o: base/hals/halx86/irq12.asm
+	$(NASM) $(ASFLAGS) $< -o $@
+
+$(BUILD)/base/hals/halx86/i386/ixclock.o: base/hals/halx86/i386/ixclock.asm
+	@mkdir -p $(BUILD)/base/hals/halx86/i386
 	$(NASM) $(ASFLAGS) $< -o $@
 
 $(KERNEL_ELF): $(ENTRY_OBJ) $(ALL_C_OBJ) $(HAL_ASM_OBJ)
