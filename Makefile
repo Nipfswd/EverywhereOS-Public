@@ -27,7 +27,8 @@ NTOS_SRC = base/ntos/ke/io.c \
            base/ntos/ke/font.c \
            base/ntos/ke/mouse.c \
            base/ntos/ke/keyboard.c \
-           base/ntos/ke/window.c
+           base/ntos/ke/window.c \
+           base/ntos/ke/time.c
 
 # Memory Manager (base\ntos\mm)
 MM_SRC = base/ntos/mm/mminit.c \

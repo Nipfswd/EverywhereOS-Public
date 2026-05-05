@@ -72,7 +72,19 @@ Return Value:
 --*/
 
 void SnakeStep(void) {
+    static uint32_t LastStepMs = 0;
+    uint32_t        Now;
+
     if (!SnakeWin.visible || SnakeWin.minimized) return;
+
+    //
+    // Advance the snake at a fixed 150 ms interval regardless of the
+    // render frame rate.  Without this gate the snake would move at
+    // 100 Hz (every 10 ms frame), which is unplayably fast.
+    //
+    Now = KernelGetTickCount();
+    if (Now - LastStepMs < 150) return;
+    LastStepMs = Now;
 
     for (int i = snake_len - 1; i > 0; i--) {
         snake_x[i] = snake_x[i - 1];

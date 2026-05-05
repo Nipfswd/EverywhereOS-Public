@@ -4,6 +4,15 @@ Features
 (build)
 00037 'make test' QEMU session would hang in CI because the guest executes cli;hlt which does not cause QEMU to exit -- updated test target to enforce a 30-second timeout via the coreutils 'timeout' command, redirect COM1 serial output to build/test.log, print the log to the terminal after QEMU exits, and exit non-zero when the final "PASS" banner is absent from the log
 
+Features
+(ke/time)
+00038 No kernel-executive time API existed - added base/ntos/ke/time.c implementing KernelGetTickCount() which converts the HAL raw 100 Hz tick counter to milliseconds since boot; declared in ke.h
+00039 Boot splash delay called HalStallExecution directly from kernel.c bypassing the Ke layer - replaced with a KernelGetTickCount() spin loop so the executive layer owns all time comparisons
+00040 Main loop frame cap called HalStallExecution(10) unconditionally - replaced with a KernelGetTickCount() frame-start timestamp; HalStallExecution is called only for the remaining budget so frames that take longer than 10 ms are not double-penalized
+
+(shell/snake)
+00041 SnakeStep advanced the snake every render frame (100 Hz) making the game unplayably fast - added a KernelGetTickCount() gate that limits movement to one step per 150 ms
+
 Fixes
 (common)
 00001 Font rendering shows identical blocks for all characters - replaced with proper 8x8 bitmap font (ASCII 32-126)
