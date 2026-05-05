@@ -1,5 +1,5 @@
 ;
-; Copyright (c) 2026  The EverywhereOS Authors
+; Copyright (c) 2026  The EverywhereOS Authors. All Rights Reserved.
 ;
 ; Module Name:
 ;

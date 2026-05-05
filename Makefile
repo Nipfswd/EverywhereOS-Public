@@ -1,4 +1,5 @@
 # Makefile for Everywhere OS Kernel -- multi-module version
+# Copyright (c) 2026  The EverywhereOS Authors. All Rights Reserved.
 
 CC      = gcc
 LD      = ld

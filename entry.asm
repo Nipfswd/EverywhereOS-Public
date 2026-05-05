@@ -1,3 +1,4 @@
+; Copyright (c) 2026  The EverywhereOS Authors. All Rights Reserved.
 [BITS 32]
 
 section .multiboot
