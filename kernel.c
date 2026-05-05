@@ -54,9 +54,17 @@ void kernelMain(uint32_t* mbi) {
     EvryFsInit();
 
     DrawBootScreen();
-    HalStallExecution(2000);
+    {
+        uint32_t BootEnd = KernelGetTickCount() + 2000;
+        while (KernelGetTickCount() < BootEnd) {
+            __asm__ __volatile__("pause");
+        }
+    }
 
     while (1) {
+        uint32_t FrameStart = KernelGetTickCount();
+        uint32_t FrameElapsed;
+
         last_scancode = 0;
         char ch = GetKeyChar();
         if (ch == 27) {
@@ -95,6 +103,14 @@ void kernelMain(uint32_t* mbi) {
         DrawMouseCursor();
         FlipBuffers();
 
-        HalStallExecution(10);
+        //
+        // Cap the frame rate at ~100 fps (10 ms per frame).  Compute
+        // elapsed time since FrameStart and sleep only the remainder so
+        // the loop does not busy-spin if all work finished quickly.
+        //
+        FrameElapsed = KernelGetTickCount() - FrameStart;
+        if (FrameElapsed < 10) {
+            HalStallExecution(10 - FrameElapsed);
+        }
     }
 }

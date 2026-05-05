@@ -110,6 +110,10 @@ void     HalEndOfInterrupt(uint8_t irq);
 uint32_t HalQueryTickCount(void);
 void     HalStallExecution(uint32_t Milliseconds);
 
+/* ********** Kernel Time ********** */
+
+uint32_t KernelGetTickCount(void);
+
 /* ********** Keyboard ********** */
 
 extern int     shift_pressed;
