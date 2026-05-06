@@ -125,4 +125,38 @@ char GetKeyChar(void);
 
 int StrEq(const char* a, const char* b);
 
+/* ********** Serial Debug Transport (COM1) ********** */
+
+#define KD_COM1_BASE    0x3F8u
+
+void     KdComPortInitialize(void);
+void     KdComPortWriteString(const char *String);
+
+extern uint32_t KiBugCheckData[5];
+
+/* ********** Kernel Bug-Check ********** */
+
+void     KeBugCheck(uint32_t BugCheckCode);
+void     KeBugCheckEx(uint32_t BugCheckCode,
+                      uint32_t Parameter1,
+                      uint32_t Parameter2,
+                      uint32_t Parameter3,
+                      uint32_t Parameter4);
+
+/*
+ * ASSERT -- active only in debug builds (DBG defined).
+ * On failure raises bug-check 0x7F (UNEXPECTED_KERNEL_MODE_TRAP),
+ * which writes the STOP line to COM1 and halts.
+ */
+#if DBG
+#define ASSERT(exp) \
+    do { \
+        if (!(exp)) { \
+            KeBugCheckEx(0x7Fu, 0, 0, 0, 0); \
+        } \
+    } while (0)
+#else
+#define ASSERT(exp) ((void)(exp))
+#endif
+
 #endif /* _KE_H_ */

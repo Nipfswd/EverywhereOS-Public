@@ -13,6 +13,16 @@ Features
 (shell/snake)
 00041 SnakeStep advanced the snake every render frame (100 Hz) making the game unplayably fast - added a KernelGetTickCount() gate that limits movement to one step per 150 ms
 
+(boot/kdcom)
+00042 No COM1 serial debug transport existed - added base/boot/kdcom/kdcomp.h (CPPORT struct, all 16550A register offsets, bit masks, baud constants, CP_GET_* codes, PORT_* flags) and base/boot/kdcom/ixkdcom.c implementing CpDoesPortExist, CpSetBaud, CpQueryBaud, CpInitialize, CpReadLsr, CpPutByte, CpGetByte, KdComPortInitialize, KdComPortWriteString; polling-mode, no interrupts
+00043 CFLAGS lacked -I./base/boot/kdcom - added include path to Makefile and added KDCOM_SRC build group
+
+(ke/bugcheck)
+00044 No bug-check facility existed - added base/ntos/ke/bugcheck.c: KeBugCheck, KeBugCheckEx, KeBugCheck2 worker, KiBugCheckData[5]; emits "*** STOP: 0xCODE (P1,P2,P3,P4)" to COM1 via KdComPortWriteString then cli/hlt
+00045 ke.h declared removed KdSerial* stubs - replaced with KdComPortInitialize/KdComPortWriteString, added extern KiBugCheckData[5], updated ASSERT to call KeBugCheckEx(0x7F,0,0,0,0)
+00046 mi.h forward-declared KdSerialPanic - replaced with KeBugCheckEx forward declaration
+00047 MmFreePool called KdSerialPanic on sentinel mismatch - replaced with KeBugCheckEx(0x19, hdr, hdr->Magic, 0, 0)
+
 Fixes
 (common)
 00001 Font rendering shows identical blocks for all characters - replaced with proper 8x8 bitmap font (ASCII 32-126)

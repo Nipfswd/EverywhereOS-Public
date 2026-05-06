@@ -9,6 +9,7 @@ CFLAGS  = -c -ffreestanding -fno-builtin -fno-stack-protector -nostdlib \
           -m32 -Wall -Wextra \
           -I./base/ntos/inc \
           -I./base/ntos/mm \
+          -I./base/boot/kdcom \
           -I./shell/explorer \
           -I./base/fs/evryfs
 
@@ -29,7 +30,11 @@ NTOS_SRC = base/ntos/ke/io.c \
            base/ntos/ke/mouse.c \
            base/ntos/ke/keyboard.c \
            base/ntos/ke/window.c \
-           base/ntos/ke/time.c
+           base/ntos/ke/time.c \
+           base/ntos/ke/bugcheck.c
+
+# Kernel debugger COM port transport (base\boot\kdcom)
+KDCOM_SRC = base/boot/kdcom/ixkdcom.c
 
 # Memory Manager (base\ntos\mm)
 MM_SRC = base/ntos/mm/mminit.c \
@@ -56,7 +61,7 @@ SHELL_SRC = shell/explorer/desktop.c \
 # Main entry
 MAIN_SRC = kernel.c
 
-ALL_C_SRC = $(NTOS_SRC) $(MM_SRC) $(HAL_SRC) $(FS_SRC) $(SHELL_SRC) $(MAIN_SRC)
+ALL_C_SRC = $(NTOS_SRC) $(KDCOM_SRC) $(MM_SRC) $(HAL_SRC) $(FS_SRC) $(SHELL_SRC) $(MAIN_SRC)
 ALL_C_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(ALL_C_SRC))
 
 KERNEL_ELF = $(BUILD)/kernel.elf
@@ -85,6 +90,7 @@ QEMU_TESTFLAGS  = -display none -m 64M -no-reboot
 
 $(shell mkdir -p $(BUILD))
 $(shell mkdir -p $(BUILD)/base/ntos/ke)
+$(shell mkdir -p $(BUILD)/base/boot/kdcom)
 $(shell mkdir -p $(BUILD)/base/ntos/mm)
 $(shell mkdir -p $(BUILD)/base/ntos/mm/tests)
 $(shell mkdir -p $(BUILD)/base/hals/halx86)
