@@ -286,7 +286,17 @@ MmFreePool(
     hdr = (PMM_POOL_HEADER)((uint8_t *)BaseAddress - MM_POOL_HEADER_SIZE);
 
     if (hdr->Magic != MM_POOL_TAG_ALLOC) {
-        for (;;) { }
+        //
+        // The block header does not carry the expected allocated-block
+        // sentinel.  This indicates one of:
+        //   - a double-free (Magic == MM_POOL_TAG_FREE)
+        //   - a write through a stale pointer that corrupted MM_POOL_POISON
+        //   - a caller that passed an address not returned by MmAllocatePool
+        //
+        // Emit the corrupted magic value to COM1 so the fault is visible
+        // even on a headless system, then halt.
+        //
+        KeBugCheckEx(0x19u, (uint32_t)(uintptr_t)hdr, hdr->Magic, 0, 0);
     }
 
     hdr->Magic = MM_POOL_TAG_FREE;

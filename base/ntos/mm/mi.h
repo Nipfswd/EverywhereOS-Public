@@ -55,4 +55,14 @@ extern MM_POOL_HEADER MiPoolFreeListHead;
  */
 void MiInitPool(uint8_t *Base, uint32_t Size);
 
+/*
+ * KeBugCheckEx -- forward declaration so MM sources can raise a bug-check
+ * without pulling in the full ke.h header.
+ */
+void KeBugCheckEx(uint32_t BugCheckCode,
+                  uint32_t Parameter1,
+                  uint32_t Parameter2,
+                  uint32_t Parameter3,
+                  uint32_t Parameter4);
+
 #endif /* _MI_H_ */

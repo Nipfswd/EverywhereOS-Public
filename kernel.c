@@ -45,6 +45,7 @@ Return Value:
 --*/
 
 void kernelMain(uint32_t* mbi) {
+    KdComPortInitialize();
     MmInit(mbi);
     SetupFramebuffer(mbi);
     InitFont();
