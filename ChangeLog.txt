@@ -90,3 +90,7 @@ Features
 
 (hal)
 00036 Busy-wait delay loops in kernelMain used volatile NOP spins with no hardware basis - replaced with PIT-driven HalStallExecution; added HalpInitializePit (8254 channel 0 mode 2, 100 Hz), HalpClockIsr C handler, HalQueryTickCount, and Irq0Stub in base/hals/halx86/i386/ixclock.asm; IRQ0 unmasked in HalInitInterrupts alongside IRQ12
+
+Patch
+(license)
+00048 License contains legally unusable requirements. Updated it to be legally applicable to client(s).

@@ -81,3 +81,8 @@ FuturePlans.*
 FuturePlans*.*
 coding_style.md
 srvins.md
+
+# No need to push documentation
+
+## This is a temporary docx file we do not want pushed.
+~$S EULA*.docx
