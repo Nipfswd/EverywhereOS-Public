@@ -1,4 +1,8 @@
-#Clay Sanders 2026
+# Copyright (c) 2026 Clay Sanders. All Rights Reserved.
+# Copyright (c) 2026 Everywhere Computing, Inc., All Rights Reserved.
+# This won't work as-is as of right now.
+#
+
 import tkinter as tk
 from tkinter import messagebox, simpledialog
 import sqlite3
