@@ -251,7 +251,7 @@ Return Value:
 
 void DrawMouseCursor(void) {
     /*
-     * 16x16 arrow cursor inspired by classic desktop cursors.
+     * 16x16 arrow cursor 16x16 arrow cursor.
      * 0 = transparent, 1 = black outline, 2 = white fill.
      */
     static const uint8_t cursor[16][16] = {

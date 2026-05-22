@@ -71,7 +71,7 @@ Features
 (mouse)
 00026 Mouse cursor is slow and laggy because it's polled once per frame - converted to interrupt-driven via IRQ12 ISR, mouse data now processed immediately on arrival
 (hal)
-00027 No interrupt infrastructure exists - added base/hals/halx86/ with IDT setup, 8259 PIC remapping, and IRQ12 assembly stub matching WS2003 HAL layout
+00027 No interrupt infrastructure exists - added base/hals/halx86/ with IDT setup, 8259 PIC remapping, and IRQ12 assembly stub
 00028 Interrupt code was accidentally and incorrectly (according to me) placed in ke/ - moved to base/hals/halx86/ to match proper architecture (HAL separate from kernel executive)
 00029 OS reboots on startup after HAL init - no GDT defined so IDT used unknown selector 0x08, added explicit GDT in entry.asm with flat code/data segments
 00030 Unhandled IRQs (timer, etc.) triple-fault because IDT entries were null - added IrqIgnoreStub default handler for all 256 vectors
@@ -94,3 +94,24 @@ Features
 Patch
 (license)
 00048 License contains legally unusable requirements. Updated it to be legally applicable to client(s).
+
+Features
+(ntos/mm)
+00049 No virtual memory paging support existed - MiEnablePaging() in mminit.c writes a 4 MB PSE identity-mapped page directory at physical 0x1000 (1024 PDEs with PCD/PWT/PS set), enables CR4.PSE, loads CR3, sets CR0.PG and CR0.WP, executes a near jump to flush the pipeline
+00050 No PFN database existed - MiBuildPfnDatabase allocates MMPFN array beyond pool area; MiPopulatePfnLists walks Multiboot memory map and inserts RAM pages into zeroed/free lists; global MmPfnDatabase, MmHighestPhysicalPage, MmTotalPages, MmAvailablePages, MmResidentAvailablePages defined in miglobal.c
+00051 Non-paged pool allocator lacked free lists and was linear-scan only - rewrote pool.c with 65 segregated free lists (POOL_SMALL_LISTS + 1 overflow bucket), 8-byte POOL_HEADER with BlockSize, PreviousSize, PoolType, Tag, doubly-linked list coalescing on free; MmAllocatePool(PoolType, NumberOfBytes, Tag) 3-arg interface; MmFreePool(P, Tag); MmQueryPoolStats(Total, Free)
+00052 No page-list management existed - added pfnlist.c: MiInsertPageInZeroedList, MiInsertPageInFreeList, MiInsertPageInStandbyList, MiInsertPageInModifiedList, MiRemoveAnyPage, MiRemovePageFromFreeList, MiUnlinkPageFromList; doubly-linked lists using MMPFN.u1.Flink / MMPFN.Blink with MM_EMPTY_LIST sentinel
+00053 No AVL balanced-tree address support library existed - added addrsup.c: MiLocateAddressInTree, MiCheckForConflictingNode, MiFindEmptyAddressRangeInTree, MiInsertNode, MiRemoveNode with AVL rotations and balance factor maintenance
+00054 No virtual address descriptor tree existed - added vadtree.c: MiInsertVad(Vad, VadRoot), MiRemoveVad(Vad, VadRoot), MiLocateAddress(Va, Root) wrapping the addrsup.c primitives
+00055 No page-fault handler existed - added pagfault.c: MmAccessFault dispatches on PTE state (zero=demand-zero, valid=copy-on-write/protection, transition=page reactivation, prototype=prototype PTE resolution, pagefile=unimplemented); uses LOCK_PFN for all PFN operations
+00056 No working-set list management existed - added wslist.c: MiInitializeWorkingSetList (chains WSLE free list, initialises MMWSL counters), MiInsertWsle (stores VPN in e1.VirtualPageNumber, records WsleIndex in PFN.u1.Flink), MiRemoveWsle; and wsmanage.c: MiTrimWorkingSet evicts pages by age using e1.Age clock hand, calls MiDecrementShareCount
+00057 No virtual memory allocation API existed - added allocvm.c: MmAllocateVirtualMemory(BaseAddress, ZeroBits, RegionSize, AllocationType, Protect) handles MEM_RESERVE (creates MMVAD, inserts into VAD tree) and MEM_COMMIT (writes demand-zero PTEs via Soft.Protection)
+00058 No virtual memory free API existed - added freevm.c: MmFreeVirtualMemory(BaseAddress, RegionSize, FreeType) handles MEM_DECOMMIT (clears PTEs, calls MiDecrementShareCount) and MEM_RELEASE (decommit all + MiRemoveVad)
+00059 No virtual memory protection API existed - added protect.c: MmProtectVirtualMemory(BaseAddress, RegionSize, NewProtect, OldProtect) updates Hard.Write for valid PTEs and Soft.Protection / Trans.Protection for software PTEs
+00060 No virtual memory query API existed - added queryvm.c: MmQueryVirtualMemory(BaseAddress, RegionBaseAddress, RegionSize, State, Protect, Type) locates VAD, determines state by inspecting PTEs, returns MEM_FREE/MEM_RESERVE/MEM_COMMIT
+00061 No system PTE management existed - added sysptes.c: MiReserveSystemPtes(N) scans a 1024-entry bitmap for a run of N consecutive free slots starting at VA 0xC0800000, clears those bits, returns first PMMPTE; MiReleaseSystemPtes(StartingPte, N) clears PTEs and marks slots free
+00062 No hyperspace page-mapping mechanism existed - added hypermap.c: MiMapPageInHyperSpace(PageFrameIndex, OldIrql) writes a Valid+Write PTE at MI_GET_PTE_ADDRESS(0xC0400000), executes invlpg, returns hyperspace VA; MiUnmapPageInHyperSpace(Va, OldIrql) clears PTE, invlpg, re-enables interrupts
+00063 No MDL support existed - added buildmdl.c: MmBuildMdlForNonPagedPool allocates an MDL + PFN array from pool and fills frame numbers from identity-map PTEs; MmProbeAndLockPages increments ReferenceCount per page and sets MDL_PAGES_LOCKED; MmUnlockPages decrements reference counts and calls MiDecrementShareCount when count reaches zero
+00064 No zero-page worker existed - added zeropage.c: MmZeroPageThread loops indefinitely calling MiRemovePageFromFreeList, mapping via MiMapPageInHyperSpace, zeroing 4 KB with a DWORD fill, unmapping, then calling MiInsertPageInZeroedList
+00065 Makefile MM_SRC listed only mminit.c and allocpag.c - expanded to include all 18 MM source files; test link rule updated to include all MM objects
+00066 mmtest.c called MmAllocatePool with 2 args and MmFreePool with 1 arg - updated all call sites to the 3-arg MmAllocatePool(NonPagedPool, size, tag) and 2-arg MmFreePool(ptr, tag) signatures; replaced ->Magic field reference with ->PoolType and ->PrevBlockSize with ->PreviousSize to match new POOL_HEADER layout

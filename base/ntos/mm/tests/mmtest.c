@@ -1,6 +1,6 @@
-/*++
+﻿/*++
 
-Copyright (c) 2026  The EverywhereOS Authors. All Rights Reserved.
+Copyright (c) 2026  Everywhere Computing, Inc. All Rights Reserved.
 
 Module Name:
 
@@ -75,6 +75,20 @@ Environment:
 
 #ifndef NULL
 #define NULL ((void *)0)
+#endif
+
+/*
+ * Compatibility aliases for the test suite.
+ * MM_POOL_TAG_ALLOC corresponds to PoolType == 1 (NonPagedPool, as stored
+ * internally by pool.c using POOL_TYPE_NONPAGED=1).
+ * MM_POOL_GRANULARITY is POOL_BLOCK_SIZE (8 bytes).
+ */
+#ifndef MM_POOL_TAG_ALLOC
+#define MM_POOL_TAG_ALLOC   1U
+#endif
+
+#ifndef MM_POOL_GRANULARITY
+#define MM_POOL_GRANULARITY POOL_BLOCK_SIZE
 #endif
 
 
@@ -689,7 +703,7 @@ MmTestCaseNullOnZeroBytes(
     void    *Ptr;
 
     MmQueryPoolStats(NULL, &FreeBefore);
-    Ptr = MmAllocatePool(0, 0x54455354);
+    Ptr = MmAllocatePool(NonPagedPool, 0, 0x54455354);
     MmQueryPoolStats(NULL, &FreeAfter);
 
     if (Ptr != (void *)0) {
@@ -708,7 +722,7 @@ Routine Description:
 
     A2 -- MmTestCaseBasicAllocNonNull
 
-    Verifies that a straightforward MmAllocatePool(16, Tag) call returns a
+    Verifies that a straightforward MmAllocatePool(NonPagedPool, 16, Tag) call returns a
     non-NULL pointer.  The returned pointer is freed before returning so that
     subsequent tests begin from a clean pool state.
 
@@ -729,11 +743,11 @@ MmTestCaseBasicAllocNonNull(
 {
     void *Ptr;
 
-    Ptr = MmAllocatePool(16, 0x54455354);
+    Ptr = MmAllocatePool(NonPagedPool, 16, 0x54455354);
     if (!Ptr) {
         return 0;
     }
-    MmFreePool(Ptr);
+    MmFreePool(Ptr, 0x54455354);
     return 1;
 }
 
@@ -749,7 +763,7 @@ Routine Description:
     little-endian ASCII).  The allocator sets this field just before
     returning the payload pointer:
 
-        block->Magic = MM_POOL_TAG_ALLOC;
+        block->PoolType = MM_POOL_TAG_ALLOC;
 
     This test reads the header field directly using MmTestGetHeader and
     compares it to the expected constant.
@@ -772,17 +786,17 @@ MmTestCaseHeaderMagicOnAlloc(
     void            *Ptr;
     PMM_POOL_HEADER  Hdr;
 
-    Ptr = MmAllocatePool(32, 0x54455354);
+    Ptr = MmAllocatePool(NonPagedPool, 32, 0x54455354);
     if (!Ptr) {
         return 0;
     }
     Hdr = MmTestGetHeader(Ptr);
 
-    if (Hdr->Magic != MM_POOL_TAG_ALLOC) {
-        MmFreePool(Ptr);
+    if (Hdr->PoolType != MM_POOL_TAG_ALLOC) {
+        MmFreePool(Ptr, 0x54455354);
         return 0;
     }
-    MmFreePool(Ptr);
+    MmFreePool(Ptr, 0x54455354);
     return 1;
 }
 
@@ -827,7 +841,7 @@ MmTestCaseHeaderPoisonOnAlloc(
     PMM_POOL_HEADER  Hdr;
     int              Ok;
 
-    Ptr = MmAllocatePool(32, 0x54455354);
+    Ptr = MmAllocatePool(NonPagedPool, 32, 0x54455354);
     if (!Ptr) {
         return 0;
     }
@@ -836,7 +850,7 @@ MmTestCaseHeaderPoisonOnAlloc(
     Ok = ((uintptr_t)Hdr->FreeNext == MM_POOL_POISON &&
           (uintptr_t)Hdr->FreePrev == MM_POOL_POISON);
 
-    MmFreePool(Ptr);
+    MmFreePool(Ptr, 0x54455354);
     return Ok;
 }
 
@@ -875,13 +889,13 @@ MmTestCaseTagStoredInHeader(
     PMM_POOL_HEADER       Hdr;
     int                   Ok;
 
-    Ptr = MmAllocatePool(32, TestTag);
+    Ptr = MmAllocatePool(NonPagedPool, 32, TestTag);
     if (!Ptr) {
         return 0;
     }
     Hdr = MmTestGetHeader(Ptr);
     Ok  = (Hdr->Tag == TestTag);
-    MmFreePool(Ptr);
+    MmFreePool(Ptr, 0x54455354);
     return Ok;
 }
 
@@ -928,12 +942,12 @@ MmTestCaseSizeRounding(
     PMM_POOL_HEADER  Hdr9;
     int              Ok;
 
-    Ptr1 = MmAllocatePool(1, 0x54455354);
-    Ptr9 = MmAllocatePool(9, 0x54455354);
+    Ptr1 = MmAllocatePool(NonPagedPool, 1, 0x54455354);
+    Ptr9 = MmAllocatePool(NonPagedPool, 9, 0x54455354);
 
     if (!Ptr1 || !Ptr9) {
-        MmFreePool(Ptr1);
-        MmFreePool(Ptr9);
+        MmFreePool(Ptr1, 0x54455354);
+        MmFreePool(Ptr9, 0x54455354);
         return 0;
     }
 
@@ -945,8 +959,8 @@ MmTestCaseSizeRounding(
           Hdr9->BlockSize  >= (MM_POOL_HEADER_SIZE + 16U)        &&
           (Hdr9->BlockSize % MM_POOL_GRANULARITY) == 0);
 
-    MmFreePool(Ptr1);
-    MmFreePool(Ptr9);
+    MmFreePool(Ptr1, 0x54455354);
+    MmFreePool(Ptr9, 0x54455354);
     return Ok;
 }
 
@@ -988,7 +1002,7 @@ MmTestCasePayloadIsWritable(
     void                 *Ptr;
     int                   Ok;
 
-    Ptr = MmAllocatePool(PayloadSize, 0x54455354);
+    Ptr = MmAllocatePool(NonPagedPool, PayloadSize, 0x54455354);
     if (!Ptr) {
         return 0;
     }
@@ -996,7 +1010,7 @@ MmTestCasePayloadIsWritable(
     MmTestMemSet(Ptr, 0xA5, PayloadSize);
     Ok = MmTestMemCheck(Ptr, 0xA5, PayloadSize);
 
-    MmFreePool(Ptr);
+    MmFreePool(Ptr, 0x54455354);
     return Ok;
 }
 
@@ -1043,13 +1057,13 @@ MmTestCaseFreeDecreasesUsage(
     void    *Ptr;
 
     MmQueryPoolStats(NULL, &FreeBefore);
-    Ptr = MmAllocatePool(128, 0x54455354);
+    Ptr = MmAllocatePool(NonPagedPool, 128, 0x54455354);
     if (!Ptr) {
         return 0;
     }
     MmQueryPoolStats(NULL, &FreeAfter);
 
-    MmFreePool(Ptr);
+    MmFreePool(Ptr, 0x54455354);
 
     return (FreeAfter < FreeBefore);
 }
@@ -1088,11 +1102,11 @@ MmTestCaseStatsRestoredAfterFree(
     void    *Ptr;
 
     MmQueryPoolStats(NULL, &FreeBefore);
-    Ptr = MmAllocatePool(128, 0x54455354);
+    Ptr = MmAllocatePool(NonPagedPool, 128, 0x54455354);
     if (!Ptr) {
         return 0;
     }
-    MmFreePool(Ptr);
+    MmFreePool(Ptr, 0x54455354);
     MmQueryPoolStats(NULL, &FreeAfter);
 
     return (FreeAfter == FreeBefore);
@@ -1137,7 +1151,7 @@ MmTestCaseBlockSizeAccounting(
     int              Ok;
 
     MmQueryPoolStats(NULL, &FreeBefore);
-    Ptr = MmAllocatePool(64, 0x54455354);
+    Ptr = MmAllocatePool(NonPagedPool, 64, 0x54455354);
     if (!Ptr) {
         return 0;
     }
@@ -1147,7 +1161,7 @@ MmTestCaseBlockSizeAccounting(
     Delta = FreeBefore - FreeAfter;
     Ok    = (Delta == Hdr->BlockSize);
 
-    MmFreePool(Ptr);
+    MmFreePool(Ptr, 0x54455354);
     return Ok;
 }
 
@@ -1163,14 +1177,14 @@ Routine Description:
 
     C1 -- MmTestCaseNullFreeIsNoOp
 
-    Verifies that MmFreePool(NULL) is a safe no-op: it does not crash, does
+    Verifies that MmFreePool(NULL, 0x54455354) is a safe no-op: it does not crash, does
     not alter pool statistics, and does not corrupt the free list.
 
     allocpag.c has the guard:
 
         if (!BaseAddress) { return; }
 
-    This test calls MmFreePool(NULL) and checks that MmPoolFreeBytes is
+    This test calls MmFreePool(NULL, 0x54455354) and checks that MmPoolFreeBytes is
     unchanged before and after the call.
 
 Arguments:
@@ -1192,7 +1206,7 @@ MmTestCaseNullFreeIsNoOp(
     uint32_t FreeAfter;
 
     MmQueryPoolStats(NULL, &FreeBefore);
-    MmFreePool((void *)0);
+    MmFreePool((void *, 0x54455354)0);
     MmQueryPoolStats(NULL, &FreeAfter);
 
     return (FreeAfter == FreeBefore);
@@ -1246,16 +1260,16 @@ MmTestCaseForwardCoalesce(
 
     MmQueryPoolStats(NULL, &Initial);
 
-    A = MmAllocatePool(128, 0x54455354);
-    B = MmAllocatePool(128, 0x54455354);
+    A = MmAllocatePool(NonPagedPool, 128, 0x54455354);
+    B = MmAllocatePool(NonPagedPool, 128, 0x54455354);
     if (!A || !B) {
-        MmFreePool(A);
-        MmFreePool(B);
+        MmFreePool(A, 0x54455354);
+        MmFreePool(B, 0x54455354);
         return 0;
     }
 
-    MmFreePool(A);
-    MmFreePool(B);
+    MmFreePool(A, 0x54455354);
+    MmFreePool(B, 0x54455354);
 
     MmQueryPoolStats(NULL, &Final);
     return (Final == Initial);
@@ -1310,16 +1324,16 @@ MmTestCaseBackwardCoalesce(
 
     MmQueryPoolStats(NULL, &Initial);
 
-    A = MmAllocatePool(128, 0x54455354);
-    B = MmAllocatePool(128, 0x54455354);
+    A = MmAllocatePool(NonPagedPool, 128, 0x54455354);
+    B = MmAllocatePool(NonPagedPool, 128, 0x54455354);
     if (!A || !B) {
-        MmFreePool(A);
-        MmFreePool(B);
+        MmFreePool(A, 0x54455354);
+        MmFreePool(B, 0x54455354);
         return 0;
     }
 
-    MmFreePool(B);
-    MmFreePool(A);
+    MmFreePool(B, 0x54455354);
+    MmFreePool(A, 0x54455354);
 
     MmQueryPoolStats(NULL, &Final);
     return (Final == Initial);
@@ -1375,26 +1389,26 @@ MmTestCaseFullCoalesceRestoresPool(
 
     MmQueryPoolStats(NULL, &Initial);
 
-    A = MmAllocatePool(64, 0x54455354);
-    B = MmAllocatePool(64, 0x54455354);
-    C = MmAllocatePool(64, 0x54455354);
-    D = MmAllocatePool(64, 0x54455354);
-    E = MmAllocatePool(64, 0x54455354);
+    A = MmAllocatePool(NonPagedPool, 64, 0x54455354);
+    B = MmAllocatePool(NonPagedPool, 64, 0x54455354);
+    C = MmAllocatePool(NonPagedPool, 64, 0x54455354);
+    D = MmAllocatePool(NonPagedPool, 64, 0x54455354);
+    E = MmAllocatePool(NonPagedPool, 64, 0x54455354);
 
     if (!A || !B || !C || !D || !E) {
-        MmFreePool(A);
-        MmFreePool(B);
-        MmFreePool(C);
-        MmFreePool(D);
-        MmFreePool(E);
+        MmFreePool(A, 0x54455354);
+        MmFreePool(B, 0x54455354);
+        MmFreePool(C, 0x54455354);
+        MmFreePool(D, 0x54455354);
+        MmFreePool(E, 0x54455354);
         return 0;
     }
 
-    MmFreePool(C);
-    MmFreePool(A);
-    MmFreePool(E);
-    MmFreePool(B);
-    MmFreePool(D);
+    MmFreePool(C, 0x54455354);
+    MmFreePool(A, 0x54455354);
+    MmFreePool(E, 0x54455354);
+    MmFreePool(B, 0x54455354);
+    MmFreePool(D, 0x54455354);
 
     MmQueryPoolStats(NULL, &Final);
     return (Final == Initial);
@@ -1444,17 +1458,17 @@ MmTestCaseMultipleAllocsAndFree(
     MmQueryPoolStats(NULL, &Initial);
 
     for (i = 0; i < MMTEST_MULTI_COUNT; i++) {
-        MmTestMultiPtrs[i] = MmAllocatePool(32, 0x54455354);
+        MmTestMultiPtrs[i] = MmAllocatePool(NonPagedPool, 32, 0x54455354);
         if (!MmTestMultiPtrs[i]) {
             while (i-- > 0) {
-                MmFreePool(MmTestMultiPtrs[i]);
+                MmFreePool(MmTestMultiPtrs[i], 0x54455354);
             }
             return 0;
         }
     }
 
     for (i = 0; i < MMTEST_MULTI_COUNT; i++) {
-        MmFreePool(MmTestMultiPtrs[i]);
+        MmFreePool(MmTestMultiPtrs[i], 0x54455354);
     }
 
     MmQueryPoolStats(NULL, &Final);
@@ -1514,10 +1528,10 @@ MmTestCasePrevBlockSizeChain(
     static const uint32_t Sizes[4] = { 16, 48, 24, 64 };
 
     for (i = 0; i < 4; i++) {
-        Ptrs[i] = MmAllocatePool(Sizes[i], 0x54455354);
+        Ptrs[i] = MmAllocatePool(NonPagedPool, Sizes[i], 0x54455354);
         if (!Ptrs[i]) {
             while (i-- > 0) {
-                MmFreePool(Ptrs[i]);
+                MmFreePool(Ptrs[i], 0x54455354);
             }
             return 0;
         }
@@ -1528,7 +1542,7 @@ MmTestCasePrevBlockSizeChain(
     Cur  = (PMM_POOL_HEADER)((uint8_t *)Prev + Prev->BlockSize);
 
     while ((uint8_t *)Cur < MiPoolEnd) {
-        if (Cur->PrevBlockSize != Prev->BlockSize) {
+        if (Cur->PreviousSize != Prev->BlockSize) {
             Ok = 0;
             break;
         }
@@ -1537,7 +1551,7 @@ MmTestCasePrevBlockSizeChain(
     }
 
     for (i = 0; i < 4; i++) {
-        MmFreePool(Ptrs[i]);
+        MmFreePool(Ptrs[i], 0x54455354);
     }
     return Ok;
 }
@@ -1586,11 +1600,11 @@ MmTestCaseFreeListSentinelMagic(
         return 0;
     }
 
-    Ptr = MmAllocatePool(32, 0x54455354);
+    Ptr = MmAllocatePool(NonPagedPool, 32, 0x54455354);
     if (!Ptr) {
         return 0;
     }
-    MmFreePool(Ptr);
+    MmFreePool(Ptr, 0x54455354);
 
     return (MiPoolFreeListHead.Magic == 0);
 }
@@ -1659,7 +1673,7 @@ MmTestCaseSizeVariants(
     Ok = 1;
 
     for (i = 0; i < MMTEST_VARIANTS_COUNT; i++) {
-        MmTestVariantPtrs[i] = MmAllocatePool(ReqSizes[i], 0x54455354);
+        MmTestVariantPtrs[i] = MmAllocatePool(NonPagedPool, ReqSizes[i], 0x54455354);
         if (!MmTestVariantPtrs[i]) {
             Ok = 0;
             break;
@@ -1669,7 +1683,7 @@ MmTestCaseSizeVariants(
         RoundedPayload = (ReqSizes[i] + MM_POOL_GRANULARITY - 1U) &
                          ~(MM_POOL_GRANULARITY - 1U);
 
-        if (Hdr->Magic != MM_POOL_TAG_ALLOC) {
+        if (Hdr->PoolType != MM_POOL_TAG_ALLOC) {
             Ok = 0;
         }
         if ((Hdr->BlockSize % MM_POOL_GRANULARITY) != 0) {
@@ -1681,7 +1695,7 @@ MmTestCaseSizeVariants(
     }
 
     for (i = 0; i < MMTEST_VARIANTS_COUNT; i++) {
-        MmFreePool(MmTestVariantPtrs[i]);
+        MmFreePool(MmTestVariantPtrs[i], 0x54455354);
     }
 
     MmQueryPoolStats(NULL, &Final);
@@ -1753,7 +1767,7 @@ MmTestCaseExhaustionReturnsNull(
     MmTestExhaustCount = 0;
 
     for (i = 0; i < MMTEST_EXHAUST_ARRAY_SIZE; i++) {
-        Ptr = MmAllocatePool(MMTEST_EXHAUST_BLOCK_SIZE, 0x54455354);
+        Ptr = MmAllocatePool(NonPagedPool, MMTEST_EXHAUST_BLOCK_SIZE, 0x54455354);
         if (!Ptr) {
             MmTestExhaustCount = i;
             return 1;
@@ -1767,7 +1781,7 @@ MmTestCaseExhaustionReturnsNull(
      * knows MMTEST_EXHAUST_ARRAY_SIZE needs to be increased.
      */
     for (i = 0; i < MMTEST_EXHAUST_ARRAY_SIZE; i++) {
-        MmFreePool(MmTestExhaustPtrs[i]);
+        MmFreePool(MmTestExhaustPtrs[i], 0x54455354);
     }
     return 0;
 }
@@ -1790,7 +1804,7 @@ Routine Description:
       1. Record initial MmPoolFreeBytes (post-E1, pool is exhausted).
       2. Free all MmTestExhaustCount blocks -- the entire arena should
          coalesce back to a single free block.
-      3. Attempt MmAllocatePool(64, tag) -- must succeed.
+      3. Attempt MmAllocatePool(NonPagedPool, 64, tag) -- must succeed.
       4. Free the new block.
       5. Verify MmPoolFreeBytes equals MmPoolTotalBytes (pool fully free).
 
@@ -1815,14 +1829,14 @@ MmTestCasePoolRecoveryAfterExhaustion(
     void    *Ptr;
 
     for (i = 0; i < MmTestExhaustCount; i++) {
-        MmFreePool(MmTestExhaustPtrs[i]);
+        MmFreePool(MmTestExhaustPtrs[i], 0x54455354);
     }
 
-    Ptr = MmAllocatePool(64, 0x54455354);
+    Ptr = MmAllocatePool(NonPagedPool, 64, 0x54455354);
     if (!Ptr) {
         return 0;
     }
-    MmFreePool(Ptr);
+    MmFreePool(Ptr, 0x54455354);
 
     MmQueryPoolStats(&Total, &FreeAfterRecovery);
     return (FreeAfterRecovery == Total);
@@ -1948,3 +1962,7 @@ testMain(
         __asm__ __volatile__("cli; hlt");
     }
 }
+
+
+
+
