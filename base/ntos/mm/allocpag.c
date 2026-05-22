@@ -1,6 +1,6 @@
 /*++
 
-Copyright (c) 2026  The EverywhereOS Authors. All Rights Reserved.
+Copyright (c) 2026  Everywhere Computing, Inc. All Rights Reserved.
 
 Module Name:
 
@@ -8,26 +8,26 @@ Module Name:
 
 Abstract:
 
-    Non-paged pool allocation and deallocation.
+    Physical page allocation and reference count management.
 
-    Implements MmAllocatePool and MmFreePool using an address-sorted,
-    doubly-linked free list with immediate coalescing of physically
-    adjacent free blocks.
+    Provides the internal routines used throughout the memory manager to
+    allocate and free individual physical page frames from the PFN database.
 
-    Each pool block is prefixed by an MM_POOL_HEADER (defined in mm.h).
-    Allocated blocks carry MM_POOL_TAG_ALLOC in the Magic field; free
-    blocks carry MM_POOL_TAG_FREE.  The FreeNext and FreePrev fields of
-    live allocations are overwritten with MM_POOL_POISON so that
-    use-after-free writes are detectable at the next MmFreePool call.
+    MiAllocatePfn   - Removes one page from the available lists, initialises
+                      its MMPFN entry, and wires it to the supplied PTE.
 
-    On every MmFreePool call the freed block is coalesced forward with its
-    next physical neighbour if that neighbour is free, then backward with
-    its previous physical neighbour under the same condition.  PrevBlockSize
-    in all affected adjacent blocks is updated to keep backward navigation
-    consistent.
+    MiFreePfn       - Decrements the share count of a page; when the count
+                      reaches zero the page is placed back on the free list.
 
-    MmQueryPoolStats returns a snapshot of total pool size and current free
-    bytes for diagnostic use.
+    MiInitializePfnEntry - Fills in a freshly allocated MMPFN entry.
+
+    MiDecrementShareCount - Decrements the share count of the PFN entry.
+                      When the count drops to zero, the page transitions
+                      to the free or standby list depending on whether it
+                      is dirty.
+
+    All routines in this file assume the caller holds the PFN lock
+    (LOCK_PFN/UNLOCK_PFN).
 
 Author:
 
@@ -35,336 +35,203 @@ Author:
 
 Environment:
 
-    Kernel-mode only
+    Kernel-mode only.  PFN lock must be held on entry to all routines.
 
 --*/
 
+#include "../inc/mm.h"
 #include "mi.h"
 
 /*++
 
 Routine Description:
 
-    Rounds Value up to the nearest multiple of Align.
-    Align must be a non-zero power of two.
+    Fills in a freshly allocated MMPFN entry.  Called immediately after
+    removing a page from one of the available lists.
 
 Arguments:
 
-    Value - Value to round.
-    Align - Alignment boundary (power of two).
+    PageFrameIndex - The physical page frame number whose MMPFN is to
+                     be initialised.
 
-Return Value:
+    TargetPte      - The PTE that will map this page.  Stored in the
+                     PteAddress field so the page can be unmapped on
+                     eviction.  May be NULL during early bootstrap.
 
-    Rounded value.
-
---*/
-
-static uint32_t
-MiAlignUp(
-    uint32_t Value,
-    uint32_t Align
-    )
-{
-    return (Value + Align - 1) & ~(Align - 1);
-}
-
-/*++
-
-Routine Description:
-
-    Inserts Block into the address-sorted free list.  The block is placed
-    immediately before the first existing free entry whose address is
-    strictly greater than Block's address, preserving ascending order.
-
-Arguments:
-
-    Block - Block to insert.  Must not already be on the free list.
+    OldIrql        - Saved interrupt state (unused on single-CPU; kept
+                     for future SMP compatibility).
 
 Return Value:
 
     None.
 
---*/
+Environment:
 
-static void
-MiInsertFreeBlock(
-    PMM_POOL_HEADER Block
+    PFN lock held.
+
+--*/
+VOID
+MiInitializePfnEntry(
+    PFN_NUMBER  PageFrameIndex,
+    PMMPTE      TargetPte,
+    ULONG       OldIrql
     )
 {
-    PMM_POOL_HEADER pos = MiPoolFreeListHead.FreeNext;
+    PMMPFN Pfn;
 
-    while (pos != &MiPoolFreeListHead && pos < Block) {
-        pos = pos->FreeNext;
-    }
+    (VOID)OldIrql;
 
-    Block->FreeNext         = pos;
-    Block->FreePrev         = pos->FreePrev;
-    pos->FreePrev->FreeNext = Block;
-    pos->FreePrev           = Block;
+    ASSERT(PageFrameIndex <= MmHighestPhysicalPage);
+
+    Pfn = MI_PFN_ELEMENT(PageFrameIndex);
+
+    Pfn->PteAddress             = TargetPte;
+    Pfn->u2.ReferenceCount      = 1;
+    Pfn->u1.ShareCount          = 1;
+    Pfn->u3.e1.PageLocation     = (ULONG)ActiveAndValid;
+    Pfn->u3.e1.Modified         = 0;
+    Pfn->u3.e1.WriteInProgress  = 0;
+    Pfn->u3.e1.ReadInProgress   = 0;
+    Pfn->u3.e1.PrototypePte     = 0;
+    Pfn->u3.e1.PageTransition   = 0;
+    Pfn->Blink                  = MM_EMPTY_LIST;
 }
 
 /*++
 
 Routine Description:
 
-    Removes Block from the free list and writes MM_POOL_POISON into its
-    FreeNext and FreePrev fields so that a subsequent double-free attempt
-    is caught during the Magic check in MmFreePool.
+    Allocates a physical page from the available page lists and records
+    the mapping in the PFN database.
+
+    The preference order is zeroed > free > standby.  If no page is
+    available at all, the system bug-checks (MEMORY_MANAGEMENT).
 
 Arguments:
 
-    Block - Block currently linked into the free list.
+    TargetPte - The PTE that will be set to map the returned page.
+                Stored in the MMPFN so the page can be located for
+                eviction.  May be NULL during early initialisation.
+
+Return Value:
+
+    Physical page frame number of the allocated page.
+
+Environment:
+
+    PFN lock held.
+
+--*/
+PFN_NUMBER
+MiAllocatePfn(
+    PMMPTE TargetPte
+    )
+{
+    PFN_NUMBER  PageFrameIndex;
+    ULONG       OldIrql;
+
+    OldIrql = 0;
+
+    PageFrameIndex = MiRemoveAnyPage(0);
+
+    if (PageFrameIndex == MM_EMPTY_LIST) {
+        KeBugCheckEx(MEMORY_MANAGEMENT, 0, 0, 0, 0);
+    }
+
+    MiInitializePfnEntry(PageFrameIndex, TargetPte, OldIrql);
+
+    return PageFrameIndex;
+}
+
+/*++
+
+Routine Description:
+
+    Decrements the share count of the PFN entry for PageFrameIndex.
+    When the share count reaches zero the page is returned to the
+    appropriate list:
+
+        - If the Modified flag is set, the page goes to the modified list
+          (to be written back before reuse).
+        - Otherwise it goes to the free list.
+
+    The reference count is also decremented.  When both counts reach zero
+    the transition PTE (if any) is cleared.
+
+Arguments:
+
+    Pfn1           - Pointer to the MMPFN entry for the page.
+
+    PageFrameIndex - Page frame number corresponding to Pfn1.
 
 Return Value:
 
     None.
 
---*/
+Environment:
 
-static void
-MiRemoveFreeBlock(
-    PMM_POOL_HEADER Block
-    )
-{
-    Block->FreePrev->FreeNext = Block->FreeNext;
-    Block->FreeNext->FreePrev = Block->FreePrev;
-    Block->FreeNext           = (PMM_POOL_HEADER)(uintptr_t)MM_POOL_POISON;
-    Block->FreePrev           = (PMM_POOL_HEADER)(uintptr_t)MM_POOL_POISON;
-}
-
-/*++
-
-Routine Description:
-
-    Allocates NumberOfBytes bytes from the non-paged pool.
-
-    The payload size is rounded up to MM_POOL_GRANULARITY and a header is
-    prepended, giving the total block size.  The free list is walked from
-    the lowest-address entry (first-fit) until a block large enough is
-    found.
-
-    If the chosen block has enough remaining space after the allocation to
-    form a valid new block (at least MM_POOL_MIN_BLOCK bytes), it is split:
-    the tail portion becomes a new free block inserted in the free list
-    immediately after the allocated block, and the PrevBlockSize of the
-    block physically following the tail is updated.
-
-    The selected block is removed from the free list, its Magic is set to
-    MM_POOL_TAG_ALLOC, and a pointer past the header is returned.
-
-Arguments:
-
-    NumberOfBytes - Usable bytes requested.  Must be greater than zero.
-
-    Tag - Four-byte caller tag stored in the block header.
-
-Return Value:
-
-    Pointer to the first usable byte of the allocation, or NULL if the
-    pool has no sufficiently large free block.
+    PFN lock held.
 
 --*/
-
-void *
-MmAllocatePool(
-    uint32_t NumberOfBytes,
-    uint32_t Tag
+VOID
+MiDecrementShareCount(
+    PMMPFN     Pfn1,
+    PFN_NUMBER PageFrameIndex
     )
 {
-    uint32_t        payload;
-    uint32_t        needed;
-    uint32_t        leftover;
-    PMM_POOL_HEADER block;
-    PMM_POOL_HEADER split;
-    PMM_POOL_HEADER next_phys;
+    ASSERT(Pfn1 != NULL);
+    ASSERT(Pfn1->u1.ShareCount != 0);
 
-    if (NumberOfBytes == 0) {
-        return (void *)0;
-    }
+    Pfn1->u1.ShareCount -= 1;
 
-    payload = MiAlignUp(NumberOfBytes, MM_POOL_GRANULARITY);
-    needed  = MM_POOL_HEADER_SIZE + payload;
+    if (Pfn1->u1.ShareCount == 0) {
 
-    block = MiPoolFreeListHead.FreeNext;
-
-    while (block != &MiPoolFreeListHead) {
-
-        if (block->BlockSize >= needed) {
-            leftover = block->BlockSize - needed;
-
-            if (leftover >= MM_POOL_MIN_BLOCK) {
-                /*
-                 * Split the block.  The tail becomes a new free block
-                 * inserted right after the current block in the free
-                 * list -- this keeps address order intact since split
-                 * is physically above block.
-                 */
-                split                = (PMM_POOL_HEADER)((uint8_t *)block + needed);
-                split->Magic         = MM_POOL_TAG_FREE;
-                split->BlockSize     = leftover;
-                split->PrevBlockSize = needed;
-                split->Tag           = 0;
-                split->FreeNext      = block->FreeNext;
-                split->FreePrev      = block;
-                block->FreeNext->FreePrev = split;
-                block->FreeNext           = split;
-
-                block->BlockSize = needed;
-
-                /* Fix PrevBlockSize of the block physically after split. */
-                next_phys = (PMM_POOL_HEADER)((uint8_t *)split + leftover);
-                if ((uint8_t *)next_phys < MiPoolEnd) {
-                    next_phys->PrevBlockSize = leftover;
-                }
-            }
-
-            /* Remove block from free list and mark allocated. */
-            MiRemoveFreeBlock(block);
-            block->Magic = MM_POOL_TAG_ALLOC;
-            block->Tag   = Tag;
-            MmPoolFreeBytes -= block->BlockSize;
-
-            return (void *)((uint8_t *)block + MM_POOL_HEADER_SIZE);
-        }
-
-        block = block->FreeNext;
-    }
-
-    return (void *)0;
-}
-
-/*++
-
-Routine Description:
-
-    Returns a pool block previously obtained from MmAllocatePool back to
-    the free pool, with immediate coalescing of adjacent free blocks.
-
-    The embedded MM_POOL_HEADER is located by subtracting MM_POOL_HEADER_SIZE
-    from BaseAddress.  If Magic does not equal MM_POOL_TAG_ALLOC, the system
-    spins (halts) to prevent silent data corruption from a double-free or
-    a stale pointer.
-
-    Coalescing sequence:
-      1. Mark the block free and credit MmPoolFreeBytes.
-      2. Forward coalesce: if the physically next block is free, merge it
-         into the current block and remove it from the free list.
-      3. Backward coalesce: if the physically previous block is free,
-         grow it to absorb the current block, remove it from the free list,
-         then re-insert it (to update its size in the list) and return.
-      4. If no backward coalesce occurred, insert the current block into
-         the free list.
-
-    PrevBlockSize in the first block beyond the merged region is updated
-    after each coalesce step to reflect the new preceding block size.
-
-Arguments:
-
-    BaseAddress - Pointer returned by a prior MmAllocatePool call.
-                  NULL is accepted as a safe no-op.
-
-Return Value:
-
-    None.
-
---*/
-
-void
-MmFreePool(
-    void *BaseAddress
-    )
-{
-    PMM_POOL_HEADER hdr;
-    PMM_POOL_HEADER next_phys;
-    PMM_POOL_HEADER prev_phys;
-    PMM_POOL_HEADER after_merge;
-
-    if (!BaseAddress) {
-        return;
-    }
-
-    hdr = (PMM_POOL_HEADER)((uint8_t *)BaseAddress - MM_POOL_HEADER_SIZE);
-
-    if (hdr->Magic != MM_POOL_TAG_ALLOC) {
-        //
-        // The block header does not carry the expected allocated-block
-        // sentinel.  This indicates one of:
-        //   - a double-free (Magic == MM_POOL_TAG_FREE)
-        //   - a write through a stale pointer that corrupted MM_POOL_POISON
-        //   - a caller that passed an address not returned by MmAllocatePool
-        //
-        // Emit the corrupted magic value to COM1 so the fault is visible
-        // even on a headless system, then halt.
-        //
-        KeBugCheckEx(0x19u, (uint32_t)(uintptr_t)hdr, hdr->Magic, 0, 0);
-    }
-
-    hdr->Magic = MM_POOL_TAG_FREE;
-    MmPoolFreeBytes += hdr->BlockSize;
-
-    /* Forward coalesce. */
-    next_phys = (PMM_POOL_HEADER)((uint8_t *)hdr + hdr->BlockSize);
-    if ((uint8_t *)next_phys < MiPoolEnd && next_phys->Magic == MM_POOL_TAG_FREE) {
-        hdr->BlockSize += next_phys->BlockSize;
-        MiRemoveFreeBlock(next_phys);
-
-        after_merge = (PMM_POOL_HEADER)((uint8_t *)hdr + hdr->BlockSize);
-        if ((uint8_t *)after_merge < MiPoolEnd) {
-            after_merge->PrevBlockSize = hdr->BlockSize;
+        if (Pfn1->u3.e1.Modified) {
+            MiInsertPageInModifiedList(PageFrameIndex);
+        } else {
+            MiInsertPageInFreeList(PageFrameIndex);
         }
     }
-
-    /* Backward coalesce. */
-    if (hdr->PrevBlockSize != 0) {
-        prev_phys = (PMM_POOL_HEADER)((uint8_t *)hdr - hdr->PrevBlockSize);
-
-        if (prev_phys->Magic == MM_POOL_TAG_FREE) {
-            prev_phys->BlockSize += hdr->BlockSize;
-            MiRemoveFreeBlock(prev_phys);
-
-            after_merge = (PMM_POOL_HEADER)((uint8_t *)prev_phys + prev_phys->BlockSize);
-            if ((uint8_t *)after_merge < MiPoolEnd) {
-                after_merge->PrevBlockSize = prev_phys->BlockSize;
-            }
-
-            MiInsertFreeBlock(prev_phys);
-            return;
-        }
-    }
-
-    MiInsertFreeBlock(hdr);
 }
 
 /*++
 
 Routine Description:
 
-    Returns a snapshot of pool statistics.
+    Frees a physical page back to the available pool by decrementing its
+    reference count.  When the reference count reaches zero,
+    MiDecrementShareCount is called to place the page on the appropriate
+    list.
 
 Arguments:
 
-    TotalBytes - Receives the total number of bytes under pool management.
-                 May be NULL.
-
-    FreeBytes  - Receives the number of bytes currently free.
-                 May be NULL.
+    PageFrameIndex - Physical page frame number to free.
 
 Return Value:
 
     None.
 
---*/
+Environment:
 
-void
-MmQueryPoolStats(
-    uint32_t *TotalBytes,
-    uint32_t *FreeBytes
+    PFN lock held.
+
+--*/
+VOID
+MiFreePfn(
+    PFN_NUMBER PageFrameIndex
     )
 {
-    if (TotalBytes) {
-        *TotalBytes = MmPoolTotalBytes;
-    }
-    if (FreeBytes) {
-        *FreeBytes = MmPoolFreeBytes;
+    PMMPFN Pfn1;
+
+    ASSERT(PageFrameIndex <= MmHighestPhysicalPage);
+
+    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
+
+    ASSERT(Pfn1->u2.ReferenceCount != 0);
+
+    Pfn1->u2.ReferenceCount -= 1;
+
+    if (Pfn1->u2.ReferenceCount == 0) {
+        MiDecrementShareCount(Pfn1, PageFrameIndex);
     }
 }

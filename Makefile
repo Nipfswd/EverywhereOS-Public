@@ -38,7 +38,23 @@ KDCOM_SRC = base/boot/kdcom/ixkdcom.c
 
 # Memory Manager (base\ntos\mm)
 MM_SRC = base/ntos/mm/mminit.c \
-         base/ntos/mm/allocpag.c
+         base/ntos/mm/miglobal.c \
+         base/ntos/mm/allocpag.c \
+         base/ntos/mm/pfnlist.c \
+         base/ntos/mm/pool.c \
+         base/ntos/mm/addrsup.c \
+         base/ntos/mm/vadtree.c \
+         base/ntos/mm/pagfault.c \
+         base/ntos/mm/wslist.c \
+         base/ntos/mm/wsmanage.c \
+         base/ntos/mm/allocvm.c \
+         base/ntos/mm/freevm.c \
+         base/ntos/mm/protect.c \
+         base/ntos/mm/queryvm.c \
+         base/ntos/mm/sysptes.c \
+         base/ntos/mm/hypermap.c \
+         base/ntos/mm/buildmdl.c \
+         base/ntos/mm/zeropage.c
 
 # File System (base\fs\evryfs)
 FS_SRC = base/fs/evryfs/ata.c \
@@ -145,7 +161,23 @@ $(TEST_MMTEST_OBJ): $(TEST_MMTEST_SRC)
 
 $(TEST_ELF): $(TEST_ENTRY_OBJ) \
              $(BUILD)/base/ntos/mm/mminit.o \
+             $(BUILD)/base/ntos/mm/miglobal.o \
              $(BUILD)/base/ntos/mm/allocpag.o \
+             $(BUILD)/base/ntos/mm/pfnlist.o \
+             $(BUILD)/base/ntos/mm/pool.o \
+             $(BUILD)/base/ntos/mm/addrsup.o \
+             $(BUILD)/base/ntos/mm/vadtree.o \
+             $(BUILD)/base/ntos/mm/pagfault.o \
+             $(BUILD)/base/ntos/mm/wslist.o \
+             $(BUILD)/base/ntos/mm/wsmanage.o \
+             $(BUILD)/base/ntos/mm/allocvm.o \
+             $(BUILD)/base/ntos/mm/freevm.o \
+             $(BUILD)/base/ntos/mm/protect.o \
+             $(BUILD)/base/ntos/mm/queryvm.o \
+             $(BUILD)/base/ntos/mm/sysptes.o \
+             $(BUILD)/base/ntos/mm/hypermap.o \
+             $(BUILD)/base/ntos/mm/buildmdl.o \
+             $(BUILD)/base/ntos/mm/zeropage.o \
              $(TEST_MMTEST_OBJ)
 	$(LD) $(LDFLAGS) $^ -o $@
 
