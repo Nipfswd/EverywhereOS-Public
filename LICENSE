@@ -1,28 +1,184 @@
-                                      Everywhere Computing License
-                                          Version 0.1, May 2026
-                        
-                  TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION AND MORE
+# Everywhere Computing License
+>Version 0.2, June 24, 2026 (06/24/2026)
 
-This Proprietary Software License Agreement governs all access to, installation of, execution of, interaction with, or possession of the Software and all associated intellectual property. By accessing or using the Software, the Licensee agrees to all terms contained in this Agreement. The Software is licensed, not sold, and all rights not expressly granted are reserved by the Licensor. All interpretations of this Agreement shall be made according to the governing law selected by the Licensor, applying standard principles of contract interpretation including those described in contract interpretation principles. No clause in this Agreement shall be construed to grant either party unilateral interpretive authority beyond what is permitted by law.
+## TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
 
-The Licensee is granted a limited, revocable, non‑exclusive, non‑transferable, non‑assignable, non‑sublicensable right to use the Software solely for non‑commercial purposes. Any commercial use requires a separate written commercial license executed between the Licensee and the Licensor. The Licensee may not reproduce, modify, adapt, translate, reverse engineer, decompile, disassemble, analyze, inspect, or attempt to derive the source code, internal logic, architecture, or design of the Software. The Licensee may not create derivative works or incorporate the Software into any other product or service. The Licensee may not disclose, publish, distribute, transmit, sell, lease, rent, loan, export, or otherwise make the Software available to any third party without explicit written authorization from the Licensor or its authorized representatives. Authorized representatives are defined as employees or agents formally designated in writing by the Licensor, consistent with the corrected authorization standard described in CEO‑only authorization clause.
+This Software License Agreement ("**Agreement**") is entered into
+between **Everywhere Computing™** ("**Licensor**") and the individual 
+or entity accessing or using the Software ("**Licensee**"), effective
+as of the date the Licensee first accesses or uses the Software 
+("**Effective Date**").
 
-All intellectual property rights associated with the Software, including copyrights, patents, trade secrets, trademarks, proprietary algorithms, data structures, and internal methodologies, remain the exclusive property of the Licensor. No transfer of ownership occurs under this Agreement. The Licensee may not remove, obscure, alter, or interfere with proprietary notices, branding, identifiers, or metadata embedded within the Software. Unauthorized use of the Licensor’s name, trademarks, or branding is prohibited. Any infringement of intellectual property rights constitutes a material breach of this Agreement.
 
-The Licensee agrees to maintain confidentiality regarding all trade secrets contained in or revealed by the Software. Trade secrets shall remain confidential indefinitely, consistent with trade secret confidentiality rules. All other confidential information shall remain confidential for a period of five years from the date of disclosure. Confidential information does not include information already known to the Licensee without breach of any obligation, information independently developed by the Licensee without reference to the Software, information that becomes publicly available through no fault of the Licensee, or information required to be disclosed by law or court order. The Licensee must implement reasonable security measures to prevent unauthorized access or disclosure. Confidentiality obligations survive termination to the extent permitted by law.
+This Agreement governs all access to, installation of, execution of,
+interaction with, or possession of the software product known as 
+**EVERYWHERE OS** (the "**Software**") and all associated documentation
+and intellectual property. By accessing or using the Software, the 
+Licensee agrees to be bound by all these terms contained in this 
+Agreement. If the Licensee does not agree to these terms, 
+the Licensee must not access or use the Software.
 
-The Licensor may conduct audits to verify compliance with this Agreement. Audits shall be limited to records, documentation, and data directly related to the Licensee’s use of the Software, consistent with audit clause best practices. Audits shall not require access to unrelated systems, devices, or personal data. The Licensor may conduct no more than one audit per twelve‑month period unless a prior audit reveals material non‑compliance. The Licensee agrees to cooperate with reasonable audit requests and to provide relevant materials within a commercially reasonable timeframe. Failure to cooperate with a lawful and properly scoped audit constitutes a material breach.
+The Software is licensed, not sold. All rights not expressly granted to
+the Licensee in this Agreement are reserved by the Licensor.
 
-The Licensee may not use the Software in violation of applicable laws, regulations, or export controls. The Licensee agrees to comply with all relevant export control laws, including the United States Export Administration Regulations and the European Union dual‑use regulations, consistent with EAR and EU dual‑use controls. The Licensee may not use the Software for unlawful activities, including unauthorized surveillance, data harvesting, discrimination, or any activity that violates privacy or security laws. Any ambiguity regarding legal compliance shall be resolved according to applicable law and not through unilateral interpretation by either party.
+---
 
-This Agreement terminates automatically upon any material breach by the Licensee. Upon termination, the Licensee must immediately cease all use of the Software, destroy all copies in their possession, and certify destruction in writing. Termination does not relieve the Licensee of ongoing obligations, including confidentiality of trade secrets and protection of intellectual property. The Licensor may pursue all available legal remedies, including injunctive relief and damages, as permitted by law.
+### 1. License Grant
 
-The Software is provided “as is” without warranties of any kind, express or implied. The Licensor disclaims all warranties, including merchantability, fitness for a particular purpose, non‑infringement, accuracy, reliability, and performance. The Licensor does not warrant that the Software will operate without interruption or error. The Licensee assumes all risks associated with use of the Software. The Licensor is not liable for any damages arising from use or inability to use the Software, including direct, indirect, incidental, consequential, punitive, or special damages, except to the extent such limitations are prohibited by law.
+Subject to the Licensee's compliance with this Agreement, the Licensor
+grants the Licensee a limited, non-exclusive, non-transferable, 
+non-sublicensable license to install and use the Software, for any
+lawful personal, professional, or internal business purpose, including
+use on the Licensee's own devices and use by the Licensee's employees
+and contractors in the ordinary course of the Licensee's business.
 
-This Agreement constitutes the entire agreement between the parties regarding the Software and supersedes all prior agreements or communications. No modification of this Agreement is valid unless accepted by both parties through explicit written agreement. The Licensor may not unilaterally modify this Agreement without the Licensee’s express consent, consistent with the legal standards governing unilateral modification described in contract interpretation principles. No waiver of any provision constitutes a waiver of any other provision. If any provision is found unenforceable, the remaining provisions remain in effect.
+This license does not permit the Licensee to: resell, sublicense, or
+redistribute the Software as a standalone product; offer the Software's
+functionality to third parties as a hosted or managed service without
+separate written authorization from the Licensor; or use the Software
+to build a competing product.  Organizations seeking to deploy the
+Software at a scale or in a manner requiring volume licensing, a
+service-level agreement, or redistribution rights should contact
+the Licensor about a separate commercial or enterprise agreement;
+absent such an agreement, this Section 1 governs all workplace and
+business use.
 
-This Agreement is governed by the laws of the jurisdiction selected by the Licensor, provided that the chosen jurisdiction bears a reasonable relationship to the parties or the transaction. The Licensee consents to jurisdiction and venue in the selected courts, except where such consent would be unreasonable or unenforceable under applicable law. The Licensee does not waive the right to challenge jurisdiction where legally permitted, consistent with the limitations on jurisdiction clauses described in arbitration clause standards.
+The Licensee may not:
 
-The Licensor may update or improve the Software, but may not disable or materially degrade functionality already provided to the Licensee unless required by law, security necessity, or mutual agreement. Any discontinuation or modification of functionality must comply with consumer protection laws and applicable regulations. The Licensee acknowledges that the Licensor may discontinue support or updates at its discretion, provided that such discontinuation does not violate applicable law.
+- reproduce, modify, adapt or translate the Software;
+- reverse engineer, decompile, disassemble, or otherwise attempt to
+derive the source code, internal logic, architecture, or design of the
+Software, except to the extent such restriction is prohibited by applicable law.
+- create derivative works based on the Software, or incorporate the Software into any other product or service;
+- disclose, publish, distribute, transmit, sell, lease, rent, loan, 
+export or otherwise make the Software available to any third party,
+without prior written authorization from the Licensor.
 
-The Licensee acknowledges that this Agreement binds all users operating under the Licensee’s control. The Licensee is responsible for ensuring that employees, contractors, and affiliates comply with all terms. The Licensee agrees that obligations related to intellectual property, confidentiality of trade secrets, and lawful use remain essential conditions of the license grant.
+For purposes of this Agreement, written authorization by the Licensor
+must be issued by an employee, officer, or agent who has been 
+designated in writing by the Licensor as having authority to grant 
+such authorization.
+
+### 2. Intellectual Property
+
+All intellectual property rights associated with the Software -- 
+including copyrights, patents, trade secrets, trademarks, proprietary
+algorithms, data structures, and internal methodologies -- remain the
+exclusive property of the Licensor or its licensors. No transfer of
+ownership occurs under this Agreement.
+
+The Licensee may not remove, obscure, alter, or interfere with any
+proprietary notices, branding, identifiers, or metadata embedded within
+the Software, and may not use the Licensor's name, trademarks, or 
+branding without authorization. Any infringement of the Licensor's 
+intellectual property rights constitutes a material breach of this
+Agreement.
+
+### 3. Confidentiality
+
+The Licensee agrees to maintain the confidentiality of all trade 
+secrets contained in or revealed by the Software. Trade secret 
+confidentiality obligations survive indefinitely, for as long as the
+relevant information qualifies as a trade secret under applicable law.
+
+All other confidential information disclosed under this Agreement 
+remains confidential for Five (5) years from the date of disclosure.
+
+"Confidential Information" does not include information that:
+
+- was already known to the Licensee without an obligation of 
+confidentiality;
+- is or becomes publically available through no fault of the Licensee;
+- is independently developed by the Licensee without reference to or 
+use of the Software; or
+- is required to be disclosed by law, regulation, or valid court or 
+governmental order, provided the Licensee gives the Licensor 
+reasonable advance notice where legally permitted.
+
+The Licensee must implement reasonable administrative, technical, and
+physical security measures to prevent unauthorized access to or 
+disclosure of confidential information. Confidentiality obligations
+survive termination of this Agreement to the extent permitted by law.
+
+### 4. Audits
+
+The Licensor may audit the Licensee's compliance with th is Agreement
+no more than once every twelve (12) months, except that the Licensor
+may conduct an additional audit within that period if a prior audit
+revealed material non-compliance.
+
+Audits are limited to records, documentation, and data diretly related
+to the Licensee's use of the Software, and do not extend to unrelated
+systems, devices, or personal data. The Licensor will provide the 
+Licensee with reasonable advance notice of an audit and will conduct it
+during normal business hours in a manner that minimizes disruption to 
+the Licensee's operations.
+
+The Licensee agrees to cooperate with reasonable, properly scoped audit
+requests and to provide relevant materials within a commercially 
+reasonable timeframe. Each party bears its own costs of an audit,
+unless the audit reveals underpayment or material non-compliance 
+exceeding five percent (5%) of amounts of properly owed, in which case
+the Licensee will reimburse the Licensor's reasonable audit costs.
+Failure to cooperate with a lawful, properly scoped audit request
+constitutes a material breach of this Agreement.
+
+### 5. Compliance with Laws
+
+The Licensee may not use the Software in violation of applicable laws
+or regulations, including applicable export control laws such as the
+U.S. Export Administration Regulations and EU dual-use regulations,
+to the extent such laws apply to the Licensee's use.
+
+The Licensee may not use the Software for any unlawful purpose, 
+including unauthorized surveillance, unlawful data harvesting, unlawful
+discrimination, or any activity that violates applicable privacy or 
+data protection laws.
+
+### 6. Term and Termination
+
+This Agreement terminates automatically if the Licensee materially breaches any provision and fails to cure that breach within thirty (30) days of receiving written notice of the breach from the Licensor, where the breach is capable of cure. Breaches of Section 1 (License Grant) or Section 2 (Intellectual Property) that involve unauthorized distribution or disclosure of the Software are not subject to a cure period and result in immediate termination.
+ 
+Upon termination, the Licensee must immediately cease all use of the Software, destroy all copies in its possession or control, and, upon request, certify such destruction in writing.
+ 
+Termination does not relieve the Licensee of obligations that by their nature survive, including confidentiality (Section 3), intellectual property protections (Section 2), and accrued payment obligations. The Licensor may pursue all remedies available at law or in equity, including injunctive relief and damages.
+ 
+### 7. Disclaimer of Warranties
+ 
+THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE," WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED. THE LICENSOR DISCLAIMS ALL WARRANTIES, INCLUDING ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON‑INFRINGEMENT, ACCURACY, RELIABILITY, AND UNINTERRUPTED OR ERROR‑FREE OPERATION, TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW. THE LICENSEE ASSUMES ALL RISK ARISING FROM THE USE OF THE SOFTWARE.
+ 
+### 8. Limitation of Liability
+ 
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE LICENSOR WILL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR FOR ANY LOSS OF PROFITS, REVENUE, DATA, OR USE, ARISING OUT OF OR RELATED TO THIS AGREEMENT OR THE SOFTWARE, EVEN IF THE LICENSOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+ 
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE LICENSOR'S TOTAL CUMULATIVE LIABILITY ARISING OUT OF OR RELATED TO THIS AGREEMENT WILL NOT EXCEED **FIVE U.S. DOLLARS (USD $5.00)**.
+ 
+This limitation applies regardless of the legal theory on which liability is based (contract, tort, or otherwise) and survives even if any limited remedy fails of its essential purpose. Nothing in this Agreement limits liability that cannot be limited or excluded under applicable law, including, where applicable, liability for death, personal injury, gross negligence, willful misconduct, or fraud.
+ 
+### 9. Entire Agreement; Modification
+ 
+This Agreement constitutes the entire agreement between the parties regarding the Software and supersedes all prior or contemporaneous agreements or communications on the subject. No modification of this Agreement is valid unless made in a writing signed by both parties, except that the Licensor may update the Software itself as described in Section 11.
+ 
+No waiver of any provision of this Agreement constitutes a waiver of any other provision or of the same provision on a future occasion.
+ 
+### 10. Severability
+ 
+If any provision of this Agreement is found to be unenforceable or invalid, that provision will be limited or eliminated to the minimum extent necessary so that this Agreement otherwise remains in full force and effect and enforceable, and, where possible, a court may reform the provision to most closely reflect the parties' original intent while making it enforceable.
+ 
+### 11. Software Updates
+ 
+The Licensor may update or improve the Software but will not disable or materially degrade functionality already made available to the Licensee, except where required by law, security necessity, or mutual agreement. The Licensor may discontinue support or updates for the Software at its discretion, subject to applicable consumer protection laws.
+ 
+### 12. Governing Law and Venue
+ 
+This Agreement is governed by the laws of **California**, without regard to its conflict‑of‑laws principles, provided that the chosen jurisdiction bears a reasonable relationship to the parties or the transaction.
+ 
+The parties consent to the exclusive jurisdiction and venue of the courts located in **Los Angeles County, California** for any dispute arising out of or relating to this Agreement, except where such consent is unenforceable under applicable law. Nothing in this Section prevents a party from seeking injunctive relief in any court of competent jurisdiction. Neither party waives any right to challenge jurisdiction or venue to the extent permitted by law.
+ 
+### 13. Binding Effect
+ 
+This Agreement binds all individuals and systems operating under the Licensee's control, including the Licensee's employees, contractors, and affiliates who access the Software. The Licensee is responsible for ensuring such individuals comply with this Agreement, and remains liable for any breach caused by them.
+ 
+---
+ 
+*EVERYWHERE COMPUTING*

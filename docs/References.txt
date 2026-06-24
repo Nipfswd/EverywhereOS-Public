@@ -1,0 +1,4 @@
+GDPR Document (docs/legal/Europe/GDPR/EN/CELEX_32016R0679_EN_TXT.pdf): https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:32016R0679
+-----------------------------------------------------------------------------------------------------------------------------------------------
+THE PRIVACY ACT OF 1974 (docs/legal/US/federal/text-of-privacy-act-1974_2015_6x9.pdf): https://www.justice.gov/opcl/file/631151/dl
+----------------------------------------------------------------------------------------------------------------------------------
