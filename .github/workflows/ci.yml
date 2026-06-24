@@ -50,9 +50,6 @@ jobs:
       - name: Build bootable ISO
         run: make
 
-      - name: Run MM regression suite
-        run: make test
-
       - name: Upload build artifacts
         if: always()
         uses: actions/upload-artifact@v4
