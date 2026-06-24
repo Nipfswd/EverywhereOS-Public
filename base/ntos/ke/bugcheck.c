@@ -1,6 +1,6 @@
 /*++
 
-Copyright (c) 2026  The EverywhereOS Authors
+Copyright (c) 2026  Everywhere Computing, Inc. All Rights Reserved.
 
 Module Name:
 
