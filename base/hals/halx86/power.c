@@ -1,26 +1,26 @@
 /*++
 
-Copyright (c) 2026  Everywhere Computing, Inc. All Rights Reserved.
+Copyright (C) Everywhere Computing, Inc. All Rights Reserved.
 
 Module Name:
 
-    io.c
-
+    power.c
+    
 Abstract:
 
-    System reboot via keyboard controller.
-
+    System power control. Reboot via the 8042 kbd controller.
+    
 Author:
 
-    Noah Juopperi <nipfswd@gmail.com>
-    Clay Sanders (made the first version of the kernel) <claylikepython@yahoo.com>
-
+    NoahJ <nipfswd@gmail.com>
+    
 Environment:
 
-    Kernel-mode only
-
+    HAL
+    
 --*/
 
+// Prototype in here
 #include "ke.h"
 
 /*++
@@ -28,17 +28,18 @@ Environment:
 Routine Description:
 
     Attempts to reboot the machine via the keyboard controller.
-
+    
 Arguments:
 
     None.
-
+    
 Return Value:
 
-    None. Does not return on success.
-
+    None.
+    
 --*/
 
+// Reboot the System!
 void RebootSystem(void) {
     while (inb(0x64) & 0x02) { }
     outb(0x64, 0xFE);

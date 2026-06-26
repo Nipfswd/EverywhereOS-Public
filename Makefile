@@ -24,8 +24,7 @@ ENTRY_SRC = entry.asm
 ENTRY_OBJ = $(BUILD)/entry.o
 
 # Kernel core (base\ntos\ke)
-NTOS_SRC = base/ntos/ke/io.c \
-           base/ntos/ke/video.c \
+NTOS_SRC = base/ntos/ke/video.c \
            base/ntos/ke/font.c \
            base/ntos/ke/mouse.c \
            base/ntos/ke/keyboard.c \
@@ -59,7 +58,8 @@ MM_SRC = base/ntos/mm/mminit.c \
 # File System (base\fs\evryfs)
 FS_SRC = base/fs/evryfs/ata.c \
          base/fs/evryfs/evryfs.c
-HAL_SRC = base/hals/halx86/halinit.c
+HAL_SRC = base/hals/halx86/halinit.c \
+          base/hals/halx86/power.c
 HAL_ASM_SRC = base/hals/halx86/irq12.asm \
               base/hals/halx86/i386/ixclock.asm
 HAL_ASM_OBJ = $(BUILD)/base/hals/halx86/irq12.o \
