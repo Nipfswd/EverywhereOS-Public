@@ -67,7 +67,7 @@ void kernelMain(uint32_t* mbi) {
         uint32_t FrameElapsed;
 
         last_scancode = 0;
-        char ch = GetKeyChar();
+        char ch = KbdClassReadInput();
         if (ch == 27) {
             RebootSystem();
         }

@@ -11,7 +11,8 @@ CFLAGS  = -c -ffreestanding -fno-builtin -fno-stack-protector -nostdlib \
           -I./base/ntos/mm \
           -I./base/boot/kdcom \
           -I./shell/explorer \
-          -I./base/fs/evryfs
+          -I./base/fs/evryfs \
+          -I./onecore/drivers/input/keyboard/kbdclass
 
 LDFLAGS = -m elf_i386 -T kernel.ld
 ASFLAGS = -f elf32
@@ -27,7 +28,6 @@ ENTRY_OBJ = $(BUILD)/entry.o
 NTOS_SRC = base/ntos/ke/video.c \
            base/ntos/ke/font.c \
            base/ntos/ke/mouse.c \
-           base/ntos/ke/keyboard.c \
            base/ntos/ke/window.c \
            base/ntos/ke/time.c \
            base/ntos/ke/bugcheck.c
@@ -74,10 +74,13 @@ SHELL_SRC = shell/explorer/desktop.c \
             shell/explorer/input.c \
             shell/explorer/files.c
 
+# Keyboard class driver (onecore)
+KBDCLASS_SRC = onecore/drivers/input/keyboard/kbdclass/kbdclass.c
+
 # Main entry
 MAIN_SRC = kernel.c
 
-ALL_C_SRC = $(NTOS_SRC) $(KDCOM_SRC) $(MM_SRC) $(HAL_SRC) $(FS_SRC) $(SHELL_SRC) $(MAIN_SRC)
+ALL_C_SRC = $(NTOS_SRC) $(KDCOM_SRC) $(MM_SRC) $(HAL_SRC) $(FS_SRC) $(SHELL_SRC) $(KBDCLASS_SRC) $(MAIN_SRC)
 ALL_C_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(ALL_C_SRC))
 
 KERNEL_ELF = $(BUILD)/kernel.elf
@@ -112,6 +115,7 @@ $(shell mkdir -p $(BUILD)/base/ntos/mm/tests)
 $(shell mkdir -p $(BUILD)/base/hals/halx86)
 $(shell mkdir -p $(BUILD)/base/fs/evryfs)
 $(shell mkdir -p $(BUILD)/shell/explorer)
+$(shell mkdir -p $(BUILD)/onecore/drivers/input/keyboard/kbdclass)
 $(shell mkdir -p $(ISO)/boot/grub)
 
 all: $(OS_ISO)
@@ -139,7 +143,18 @@ $(ISO)/boot/grub/grub.cfg:
 	echo 'set timeout=0' > $@
 	echo 'set default=0' >> $@
 	echo '' >> $@
+	echo 'insmod all_video' >> $@
+	echo 'insmod vbe' >> $@
+	echo 'insmod vga' >> $@
+	echo '' >> $@
+	echo 'if loadfont /boot/grub/fonts/unicode.pf2; then' >> $@
+	echo '    set gfxmode=auto' >> $@
+	echo '    insmod gfxterm' >> $@
+	echo '    terminal_output gfxterm' >> $@
+	echo 'fi' >> $@
+	echo '' >> $@
 	echo 'menuentry "Everywhere OS" {' >> $@
+	echo '    set gfxpayload=keep' >> $@
 	echo '    multiboot /boot/kernel.elf' >> $@
 	echo '    boot' >> $@
 	echo '}' >> $@

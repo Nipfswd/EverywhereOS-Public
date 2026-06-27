@@ -115,11 +115,9 @@ void     HalStallExecution(uint32_t Milliseconds);
 uint32_t KernelGetTickCount(void);
 
 /* ********** Keyboard ********** */
+// new driver
 
-extern int     shift_pressed;
-extern uint8_t last_scancode;
-
-char GetKeyChar(void);
+#include "kbdclass.h"
 
 /* ********** Utility ********** */
 
