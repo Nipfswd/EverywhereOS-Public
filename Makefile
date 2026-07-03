@@ -5,6 +5,9 @@ CC      = gcc
 LD      = ld
 NASM    = nasm
 
+# Host compiler used for build-time tools (no cross-compilation flags).
+HOST_CC = gcc
+
 CFLAGS  = -c -ffreestanding -fno-builtin -fno-stack-protector -nostdlib \
           -m32 -Wall -Wextra \
           -I./base/ntos/inc \
@@ -19,7 +22,10 @@ ASFLAGS = -f elf32
 
 BUILD = build
 ISO   = iso
-DISK_IMG = $(BUILD)/disk.img
+DISK_IMG   = $(BUILD)/disk.img
+FOLDER_ICO = shell/explorer/assets/folder.ico
+MKDISK_SRC = tools/mkdisk.c
+MKDISK_EXE = $(BUILD)/mkdisk
 
 ENTRY_SRC = entry.asm
 ENTRY_OBJ = $(BUILD)/entry.o
@@ -72,7 +78,8 @@ SHELL_SRC = shell/explorer/desktop.c \
             shell/explorer/notes.c \
             shell/explorer/snake.c \
             shell/explorer/input.c \
-            shell/explorer/files.c
+            shell/explorer/files.c \
+            shell/explorer/icon.c
 
 # Keyboard class driver (onecore)
 KBDCLASS_SRC = onecore/drivers/input/keyboard/kbdclass/kbdclass.c
@@ -162,8 +169,11 @@ $(ISO)/boot/grub/grub.cfg:
 $(OS_ISO): $(ISO)/boot/kernel.elf $(ISO)/boot/grub/grub.cfg
 	grub-mkrescue -o $@ $(ISO)
 
-$(DISK_IMG):
-	qemu-img create -f raw $@ 1M
+$(MKDISK_EXE): $(MKDISK_SRC)
+	$(HOST_CC) -o $@ $<
+
+$(DISK_IMG): $(MKDISK_EXE) $(FOLDER_ICO)
+	$(MKDISK_EXE) $(FOLDER_ICO) $@
 
 run: $(OS_ISO) $(DISK_IMG)
 	qemu-system-i386 -cdrom $(OS_ISO) -hda $(DISK_IMG) #-full-screen

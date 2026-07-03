@@ -53,6 +53,7 @@ void kernelMain(uint32_t* mbi) {
     HalInitInterrupts();
     SnakeInit();
     EvryFsInit();
+    IconInit();
 
     DrawBootScreen();
     {

@@ -110,6 +110,9 @@ void FilesDraw(void)
 
     EvryFsList(names, sizes, &count);
 
+     // Each row is 18 pixels tall to accommodate the 16x16 folder icon.
+     // The icon is drawn at the left edge; the filename + size text is
+     // indented 18 pixels to the right, vertically centred at icon+5.
     int y = FilesWin.y + 14;
 
     if (count == 0) {
@@ -119,6 +122,7 @@ void FilesDraw(void)
 
     for (int i = 0; i < count; i++) {
         if (y >= FilesWin.y + FilesWin.h - 2) break;
+        IconDrawFolder(FilesWin.x + 2, y);
 
         /* Build row: "name   <size> B" */
         char row[48];
@@ -140,7 +144,7 @@ void FilesDraw(void)
         if (len < 46) { row[len++] = 'B'; }
         row[len] = 0;
 
-        DrawString(FilesWin.x + 4, y, row, 0x0F);
-        y += 10;
+        DrawString(FilesWin.x + 20, y + 5, row, 0x0F);
+        y += 18;
     }
 }

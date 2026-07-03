@@ -25,6 +25,7 @@ CMakeFiles/
 logs/
 
 # FILES
+imageres.dll
 
 # Generic Temporary/Cache
 *.tmp

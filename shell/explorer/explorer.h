@@ -71,6 +71,20 @@ void NotesDraw(void);
 
 void FilesDraw(void);
 
+/* ********** Icons ********** */
+
+/*
+ * IconInit  -- Load C:\Everywhere\Res\F\folder.ico from EVRYFS and decode
+ *              it into a 16x16 VGA-palette pixel array.
+ */
+void IconInit(void);
+
+/*
+ * IconDrawFolder -- Blit the decoded 16x16 folder icon to the back buffer
+ *                   with top-left corner at xy
+ */
+void IconDrawFolder(int x, int y);
+
 /* ********** Snake ********** */
 
 #define SNAKE_MAX 100
