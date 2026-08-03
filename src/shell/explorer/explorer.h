@@ -70,6 +70,8 @@ void NotesDraw(void);
 /* ********** Files ********** */
 
 void FilesDraw(void);
+void FilesHandleClick(int mx, int my);
+void FilesHandleKey(int scancode);
 
 /* ********** Icons ********** */
 

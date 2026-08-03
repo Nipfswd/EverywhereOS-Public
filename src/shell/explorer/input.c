@@ -49,6 +49,12 @@ void HandleKeyboardInput(char ch) {
         if (last_scancode == 0x4D && snake_dx != -1) { snake_dx = 1;  snake_dy = 0; }
     }
 
+    /* Files window: up/down arrow navigation */
+    if (active_window == 3 && FilesWin.visible && !FilesWin.minimized) {
+        if (last_scancode == 0x48 || last_scancode == 0x50)
+            FilesHandleKey(last_scancode);
+    }
+
     if (!ch) return;
 
     if (active_window == 0) {

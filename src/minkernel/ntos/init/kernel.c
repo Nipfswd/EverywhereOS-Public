@@ -83,6 +83,11 @@ void kernelMain(uint32_t* mbi) {
         HandleWindowMouse(&NotesWin, 1);
         HandleWindowMouse(&SnakeWin, 2);
         HandleWindowMouse(&FilesWin, 3);
+
+        /* Forward left-click-down events into the Files content area. */
+        if ((mouse_buttons & 1) && !(mouse_prev_buttons & 1))
+            FilesHandleClick(mouse_x, mouse_y);
+
         HandleTaskbarClick();
 
         UpdateWindowPhysics(&ShellWin);

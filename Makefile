@@ -1,91 +1,88 @@
-# Makefile for Everywhere OS Kernel -- multi-module version
+# Makefile for Everywhere OS
 # Copyright (c) 2026  Everywhere Computing, Inc. All Rights Reserved.
 
 CC      = gcc
 LD      = ld
 NASM    = nasm
 
-# Host compiler used for build-time tools (no cross-compilation flags).
 HOST_CC = gcc
 
 CFLAGS  = -c -ffreestanding -fno-builtin -fno-stack-protector -nostdlib \
           -m32 -Wall -Wextra \
-          -I./base/ntos/inc \
-          -I./base/ntos/mm \
-          -I./base/boot/kdcom \
-          -I./shell/explorer \
-          -I./base/fs/evryfs \
-          -I./onecore/drivers/input/keyboard/kbdclass
+          -I./src/minkernel/ntos/inc \
+          -I./src/minkernel/ntos/mm \
+          -I./src/minkernel/boot/kdcom \
+          -I./src/shell/explorer \
+          -I./src/minkernel/fs/evryfs \
+          -I./src/onecore/drivers/input/keyboard/kbdclass
 
-LDFLAGS = -m elf_i386 -T kernel.ld
+LDFLAGS = -m elf_i386 -T src/minkernel/ntos/init/kernel.ld
 ASFLAGS = -f elf32
 
-BUILD = build
+BUILD = obj/i386fre
+BIN   = bin/i386fre/images
 ISO   = iso
-DISK_IMG   = $(BUILD)/disk.img
-FOLDER_ICO = shell/explorer/assets/folder.ico
-MKDISK_SRC = tools/mkdisk.c
+DISK_IMG   = $(BIN)/disk.img
+FOLDER_ICO = src/shell/explorer/assets/folder.ico
+MKDISK_SRC = src/tools/mkdisk.c
 MKDISK_EXE = $(BUILD)/mkdisk
 
-ENTRY_SRC = entry.asm
-ENTRY_OBJ = $(BUILD)/entry.o
+ENTRY_SRC = src/minkernel/ntos/init/entry.asm
+ENTRY_OBJ = $(BUILD)/src/minkernel/ntos/init/entry.o
 
-# Kernel core (base\ntos\ke)
-NTOS_SRC = base/ntos/ke/video.c \
-           base/ntos/ke/font.c \
-           base/ntos/ke/mouse.c \
-           base/ntos/ke/window.c \
-           base/ntos/ke/time.c \
-           base/ntos/ke/bugcheck.c
+# Kernel core (src\minkernel\ntos\ke)
+NTOS_SRC = src/minkernel/ntos/ke/video.c \
+           src/minkernel/ntos/ke/font.c \
+           src/minkernel/ntos/ke/mouse.c \
+           src/minkernel/ntos/ke/window.c \
+           src/minkernel/ntos/ke/time.c \
+           src/minkernel/ntos/ke/bugcheck.c
 
-# Kernel debugger COM port transport (base\boot\kdcom)
-KDCOM_SRC = base/boot/kdcom/ixkdcom.c
+# Kernel debugger COM port transport (src\minkernel\boot\kdcom)
+KDCOM_SRC = src/minkernel/boot/kdcom/ixkdcom.c
 
-# Memory Manager (base\ntos\mm)
-MM_SRC = base/ntos/mm/mminit.c \
-         base/ntos/mm/miglobal.c \
-         base/ntos/mm/allocpag.c \
-         base/ntos/mm/pfnlist.c \
-         base/ntos/mm/pool.c \
-         base/ntos/mm/addrsup.c \
-         base/ntos/mm/vadtree.c \
-         base/ntos/mm/pagfault.c \
-         base/ntos/mm/wslist.c \
-         base/ntos/mm/wsmanage.c \
-         base/ntos/mm/allocvm.c \
-         base/ntos/mm/freevm.c \
-         base/ntos/mm/protect.c \
-         base/ntos/mm/queryvm.c \
-         base/ntos/mm/sysptes.c \
-         base/ntos/mm/hypermap.c \
-         base/ntos/mm/buildmdl.c \
-         base/ntos/mm/zeropage.c
+# Memory Manager (src\minkernel\ntos\mm)
+MM_SRC = src/minkernel/ntos/mm/mminit.c \
+         src/minkernel/ntos/mm/miglobal.c \
+         src/minkernel/ntos/mm/allocpag.c \
+         src/minkernel/ntos/mm/pfnlist.c \
+         src/minkernel/ntos/mm/pool.c \
+         src/minkernel/ntos/mm/addrsup.c \
+         src/minkernel/ntos/mm/vadtree.c \
+         src/minkernel/ntos/mm/pagfault.c \
+         src/minkernel/ntos/mm/wslist.c \
+         src/minkernel/ntos/mm/wsmanage.c \
+         src/minkernel/ntos/mm/allocvm.c \
+         src/minkernel/ntos/mm/freevm.c \
+         src/minkernel/ntos/mm/protect.c \
+         src/minkernel/ntos/mm/queryvm.c \
+         src/minkernel/ntos/mm/sysptes.c \
+         src/minkernel/ntos/mm/hypermap.c \
+         src/minkernel/ntos/mm/buildmdl.c \
+         src/minkernel/ntos/mm/zeropage.c
 
-# File System (base\fs\evryfs)
-FS_SRC = base/fs/evryfs/ata.c \
-         base/fs/evryfs/evryfs.c
-HAL_SRC = base/hals/halx86/halinit.c \
-          base/hals/halx86/power.c
-HAL_ASM_SRC = base/hals/halx86/irq12.asm \
-              base/hals/halx86/i386/ixclock.asm
-HAL_ASM_OBJ = $(BUILD)/base/hals/halx86/irq12.o \
-              $(BUILD)/base/hals/halx86/i386/ixclock.o
+FS_SRC = src/minkernel/fs/evryfs/ata.c \
+         src/minkernel/fs/evryfs/evryfs.c
+HAL_SRC = src/minkernel/hals/halx86/halinit.c \
+          src/minkernel/hals/halx86/power.c
+HAL_ASM_SRC = src/minkernel/hals/halx86/irq12.asm \
+              src/minkernel/hals/halx86/i386/ixclock.asm
+HAL_ASM_OBJ = $(BUILD)/src/minkernel/hals/halx86/irq12.o \
+              $(BUILD)/src/minkernel/hals/halx86/i386/ixclock.o
 
-# Shell / Explorer (userspace)
-SHELL_SRC = shell/explorer/desktop.c \
-            shell/explorer/taskbar.c \
-            shell/explorer/shell.c \
-            shell/explorer/notes.c \
-            shell/explorer/snake.c \
-            shell/explorer/input.c \
-            shell/explorer/files.c \
-            shell/explorer/icon.c
+SHELL_SRC = src/shell/explorer/desktop.c \
+            src/shell/explorer/taskbar.c \
+            src/shell/explorer/shell.c \
+            src/shell/explorer/notes.c \
+            src/shell/explorer/snake.c \
+            src/shell/explorer/input.c \
+            src/shell/explorer/files.c \
+            src/shell/explorer/icon.c
 
-# Keyboard class driver (onecore)
-KBDCLASS_SRC = onecore/drivers/input/keyboard/kbdclass/kbdclass.c
+KBDCLASS_SRC = src/onecore/drivers/input/keyboard/kbdclass/kbdclass.c
 
 # Main entry
-MAIN_SRC = kernel.c
+MAIN_SRC = src/minkernel/ntos/init/kernel.c
 
 ALL_C_SRC = $(NTOS_SRC) $(KDCOM_SRC) $(MM_SRC) $(HAL_SRC) $(FS_SRC) $(SHELL_SRC) $(KBDCLASS_SRC) $(MAIN_SRC)
 ALL_C_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(ALL_C_SRC))
@@ -93,36 +90,29 @@ ALL_C_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(ALL_C_SRC))
 KERNEL_ELF = $(BUILD)/kernel.elf
 OS_ISO     = $(BUILD)/os.iso
 
-# MM regression test kernel
-#
-# The test binary is a standalone Multiboot ELF that contains only the MM
-# sources and the test suite.  It is loaded directly by QEMU via -kernel
-# (no GRUB or ISO required) and runs entirely headless, writing all output
-# to COM1 which is forwarded to the host terminal via -serial stdio.
-#
-# Build and run: make test
-# The suite prints [ PASS ] / [ FAIL ] per case and a final PASS or FAIL
-# banner.  Non-zero exit from make test indicates at least one failure.
-
-TEST_ENTRY_SRC  = base/ntos/mm/tests/entry.asm
-TEST_ENTRY_OBJ  = $(BUILD)/base/ntos/mm/tests/entry.o
-TEST_MMTEST_SRC = base/ntos/mm/tests/mmtest.c
-TEST_MMTEST_OBJ = $(BUILD)/base/ntos/mm/tests/mmtest.o
+TEST_ENTRY_SRC  = src/minkernel/ntos/mm/tests/entry.asm
+TEST_ENTRY_OBJ  = $(BUILD)/src/minkernel/ntos/mm/tests/entry.o
+TEST_MMTEST_SRC = src/minkernel/ntos/mm/tests/mmtest.c
+TEST_MMTEST_OBJ = $(BUILD)/src/minkernel/ntos/mm/tests/mmtest.o
 TEST_ELF        = $(BUILD)/mmtest.elf
+
+KERNEL_ELF = $(BUILD)/kernel.elf
+OS_ISO     = $(BIN)/os.iso
 
 QEMU_TESTFLAGS  = -display none -m 64M -no-reboot
 
 .PHONY: all clean run test
 
-$(shell mkdir -p $(BUILD))
-$(shell mkdir -p $(BUILD)/base/ntos/ke)
-$(shell mkdir -p $(BUILD)/base/boot/kdcom)
-$(shell mkdir -p $(BUILD)/base/ntos/mm)
-$(shell mkdir -p $(BUILD)/base/ntos/mm/tests)
-$(shell mkdir -p $(BUILD)/base/hals/halx86)
-$(shell mkdir -p $(BUILD)/base/fs/evryfs)
-$(shell mkdir -p $(BUILD)/shell/explorer)
-$(shell mkdir -p $(BUILD)/onecore/drivers/input/keyboard/kbdclass)
+$(shell mkdir -p $(BUILD)/src/minkernel/ntos/init)
+$(shell mkdir -p $(BUILD)/src/minkernel/ntos/ke)
+$(shell mkdir -p $(BUILD)/src/minkernel/boot/kdcom)
+$(shell mkdir -p $(BUILD)/src/minkernel/ntos/mm)
+$(shell mkdir -p $(BUILD)/src/minkernel/ntos/mm/tests)
+$(shell mkdir -p $(BUILD)/src/minkernel/hals/halx86/i386)
+$(shell mkdir -p $(BUILD)/src/minkernel/fs/evryfs)
+$(shell mkdir -p $(BUILD)/src/shell/explorer)
+$(shell mkdir -p $(BUILD)/src/onecore/drivers/input/keyboard/kbdclass)
+$(shell mkdir -p $(BIN))
 $(shell mkdir -p $(ISO)/boot/grub)
 
 all: $(OS_ISO)
@@ -133,11 +123,10 @@ $(ENTRY_OBJ): $(ENTRY_SRC)
 $(BUILD)/%.o: %.c
 	$(CC) $(CFLAGS) $< -o $@
 
-$(BUILD)/base/hals/halx86/irq12.o: base/hals/halx86/irq12.asm
+$(BUILD)/src/minkernel/hals/halx86/irq12.o: src/minkernel/hals/halx86/irq12.asm
 	$(NASM) $(ASFLAGS) $< -o $@
 
-$(BUILD)/base/hals/halx86/i386/ixclock.o: base/hals/halx86/i386/ixclock.asm
-	@mkdir -p $(BUILD)/base/hals/halx86/i386
+$(BUILD)/src/minkernel/hals/halx86/i386/ixclock.o: src/minkernel/hals/halx86/i386/ixclock.asm
 	$(NASM) $(ASFLAGS) $< -o $@
 
 $(KERNEL_ELF): $(ENTRY_OBJ) $(ALL_C_OBJ) $(HAL_ASM_OBJ)
@@ -185,24 +174,24 @@ $(TEST_MMTEST_OBJ): $(TEST_MMTEST_SRC)
 	$(CC) $(CFLAGS) $< -o $@
 
 $(TEST_ELF): $(TEST_ENTRY_OBJ) \
-             $(BUILD)/base/ntos/mm/mminit.o \
-             $(BUILD)/base/ntos/mm/miglobal.o \
-             $(BUILD)/base/ntos/mm/allocpag.o \
-             $(BUILD)/base/ntos/mm/pfnlist.o \
-             $(BUILD)/base/ntos/mm/pool.o \
-             $(BUILD)/base/ntos/mm/addrsup.o \
-             $(BUILD)/base/ntos/mm/vadtree.o \
-             $(BUILD)/base/ntos/mm/pagfault.o \
-             $(BUILD)/base/ntos/mm/wslist.o \
-             $(BUILD)/base/ntos/mm/wsmanage.o \
-             $(BUILD)/base/ntos/mm/allocvm.o \
-             $(BUILD)/base/ntos/mm/freevm.o \
-             $(BUILD)/base/ntos/mm/protect.o \
-             $(BUILD)/base/ntos/mm/queryvm.o \
-             $(BUILD)/base/ntos/mm/sysptes.o \
-             $(BUILD)/base/ntos/mm/hypermap.o \
-             $(BUILD)/base/ntos/mm/buildmdl.o \
-             $(BUILD)/base/ntos/mm/zeropage.o \
+             $(BUILD)/src/minkernel/ntos/mm/mminit.o \
+             $(BUILD)/src/minkernel/ntos/mm/miglobal.o \
+             $(BUILD)/src/minkernel/ntos/mm/allocpag.o \
+             $(BUILD)/src/minkernel/ntos/mm/pfnlist.o \
+             $(BUILD)/src/minkernel/ntos/mm/pool.o \
+             $(BUILD)/src/minkernel/ntos/mm/addrsup.o \
+             $(BUILD)/src/minkernel/ntos/mm/vadtree.o \
+             $(BUILD)/src/minkernel/ntos/mm/pagfault.o \
+             $(BUILD)/src/minkernel/ntos/mm/wslist.o \
+             $(BUILD)/src/minkernel/ntos/mm/wsmanage.o \
+             $(BUILD)/src/minkernel/ntos/mm/allocvm.o \
+             $(BUILD)/src/minkernel/ntos/mm/freevm.o \
+             $(BUILD)/src/minkernel/ntos/mm/protect.o \
+             $(BUILD)/src/minkernel/ntos/mm/queryvm.o \
+             $(BUILD)/src/minkernel/ntos/mm/sysptes.o \
+             $(BUILD)/src/minkernel/ntos/mm/hypermap.o \
+             $(BUILD)/src/minkernel/ntos/mm/buildmdl.o \
+             $(BUILD)/src/minkernel/ntos/mm/zeropage.o \
              $(TEST_MMTEST_OBJ)
 	$(LD) $(LDFLAGS) $^ -o $@
 
@@ -213,4 +202,4 @@ test: $(TEST_ELF)
 	grep -q "^PASS" $(BUILD)/test.log
 
 clean:
-	rm -rf $(BUILD) $(ISO)
+	rm -rf $(BUILD) $(BIN) $(ISO)
