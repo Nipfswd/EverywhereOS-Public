@@ -4,7 +4,7 @@ EverywhereOS Non-Paged Pool Regression Test Suite
 Document: docs/ntos/mm/tests.txt
 Subsystem: Memory Manager (Mm)
 Component: Non-paged pool regression tests
-Location: base/ntos/mm/tests/
+Location: src/minkernel/ntos/mm/tests/
 
 
 Overview
