@@ -1,6 +1,6 @@
 # 🌐 Everywhere OS
 
-[![CI](https://github.com/claysanders157-art/Everywhere-OS/actions/workflows/ci.yml/badge.svg)](https://github.com/claysanders157-art/Everywhere-OS/actions/workflows/ci.yml)
+[![CI](https://github.com/Nipfswd/EverywhereOS-Public/actions/workflows/ci.yml/badge.svg)](https://github.com/Nipfswd/EverywhereOS-Public/actions/workflows/ci.yml)
 
 Modern [operating systems](https://en.wikipedia.org/wiki/Operating_system) face a fundamental problem: companies continually release updates to patch issues, fully aware that their systems fall short. Yet they rarely take the step of rethinking their platforms from the ground up. They avoid confronting the truth.
 
