@@ -44,7 +44,6 @@ Desktop.ini
 *.img
 *.exe
 *.dll
-*.iso
 *.o
 # Python Binaries
 *.pyc
