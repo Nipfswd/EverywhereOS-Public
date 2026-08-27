@@ -19,7 +19,7 @@
 # -----
 # Add the following line to README.md to display the live status badge:
 #
-#   [![CI](https://github.com/claysanders157-art/Everywhere-OSactions/workflows/ci.yml/badge.svg)](https://github.com/claysanders157-art/Everywhere-OS/actions/workflows/ci.yml)
+#  [![CI](https://github.com/Nipfswd/EverywhereOS-Public/actions/workflows/ci.yml/badge.svg)](https://github.com/Nipfswd/EverywhereOS-Public/actions/workflows/ci.yml)
 
 name: CI
 
