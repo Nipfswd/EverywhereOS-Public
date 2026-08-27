@@ -7,7 +7,6 @@
 
 # General
 iso/
-build/
 dist/
 release/
 .cargo/
