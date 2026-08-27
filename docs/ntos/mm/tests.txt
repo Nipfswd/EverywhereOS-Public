@@ -22,23 +22,23 @@ compiles the test binary and launches QEMU with -nographic and
 -serial stdio so that the output appears directly in the terminal.
 
 The suite is intended to be run on every commit that touches:
-  - base/ntos/mm/allocpag.c
-  - base/ntos/mm/mminit.c
-  - base/ntos/inc/mm.h
-  - base/ntos/mm/mi.h
+  - src/minkernel/ntos/mm/allocpag.c
+  - src/minkernel/ntos/mm/mminit.c
+  - src/minkernel/ntos/inc/mm.h
+  - src/minkernel/ntos/mm/mi.h
 
 
 Files
 -----
 
-base/ntos/mm/tests/entry.asm
+src/minkernel/ntos/mm/tests/entry.asm
 
     Multiboot v1 entry point for the test kernel.  Requests no video
     mode (flags = 0x1) so QEMU -nographic is safe.  Loads a flat 32-bit
     GDT, sets up a 16 KB stack in BSS, and calls testMain with the
     Multiboot information pointer in EBX.
 
-base/ntos/mm/tests/mmtest.c
+src/minkernel/ntos/mm/test/mmtest.c
 
     The complete test kernel in one translation unit.  Contains:
 
@@ -62,10 +62,10 @@ Building
     make test
 
 The test binary (build/mmtest.elf) is built from:
-  - base/ntos/mm/tests/entry.asm
-  - base/ntos/mm/mminit.c   (shared with the production kernel)
-  - base/ntos/mm/allocpag.c (shared with the production kernel)
-  - base/ntos/mm/tests/mmtest.c
+  - src/minkernel/ntos/mm/tests/entry.asm
+  - src/minkernel/ntos/mm/mminit.c   (shared with the production kernel)
+  - src/minkernel/ntos/mm/allocpag.c (shared with the production kernel)
+  - src/minkernel/ntos/mm/tests/mmtest.c
 
 The same CFLAGS used for the production kernel apply: -ffreestanding
 -fno-builtin -fno-stack-protector -nostdlib -m32.
