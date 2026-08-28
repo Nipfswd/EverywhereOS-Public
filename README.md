@@ -15,4 +15,4 @@ If you want to download our latest release, or just learn more, check out our ho
 Learn more: https://sites.google.com/view/everywhereos/home
 
 Current state:
-![Current OS](docs/imgs/2026-04-20-1305-shell.png)
+![Current OS](docs/imgs/2026-08-28-1035-shell.png)
