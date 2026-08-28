@@ -8,7 +8,6 @@
 # General
 iso/
 obj/
-bin/
 dist/
 release/
 .cargo/
