@@ -56,5 +56,5 @@ jobs:
         with:
           name: everywhere-os-build
           path: |
-            build/os.iso
+            bin/i386fre/images/os.iso
             build/test.log
