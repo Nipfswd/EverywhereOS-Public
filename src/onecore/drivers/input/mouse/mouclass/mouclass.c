@@ -4,11 +4,12 @@ Copyright (c) 2026  Everywhere Computing, Inc. All Rights Reserved.
 
 Module Name:
 
-    mouse.c
+    mouclass.c
 
 Abstract:
 
-    PS/2 mouse initialization, polling, and cursor drawing.
+    Mouse class driver. PS/2 mouse initialization, polling, and cursor
+    drawing.
 
 Author:
 

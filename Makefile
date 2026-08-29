@@ -14,7 +14,8 @@ CFLAGS  = -c -ffreestanding -fno-builtin -fno-stack-protector -nostdlib \
           -I./src/minkernel/boot/kdcom \
           -I./src/shell/explorer \
           -I./src/minkernel/fs/evryfs \
-          -I./src/onecore/drivers/input/keyboard/kbdclass
+          -I./src/onecore/drivers/input/keyboard/kbdclass \
+          -I./src/onecore/drivers/input/mouse/mouclass
 
 LDFLAGS = -m elf_i386 -T src/minkernel/ntos/init/kernel.ld
 ASFLAGS = -f elf32
@@ -33,7 +34,6 @@ ENTRY_OBJ = $(BUILD)/src/minkernel/ntos/init/entry.o
 # Kernel core (src\minkernel\ntos\ke)
 NTOS_SRC = src/minkernel/ntos/ke/video.c \
            src/minkernel/ntos/ke/font.c \
-           src/minkernel/ntos/ke/mouse.c \
            src/minkernel/ntos/ke/window.c \
            src/minkernel/ntos/ke/time.c \
            src/minkernel/ntos/ke/bugcheck.c
@@ -80,11 +80,12 @@ SHELL_SRC = src/shell/explorer/desktop.c \
             src/shell/explorer/icon.c
 
 KBDCLASS_SRC = src/onecore/drivers/input/keyboard/kbdclass/kbdclass.c
+MOUCLASS_SRC = src/onecore/drivers/input/mouse/mouclass/mouclass.c
 
 # Main entry
 MAIN_SRC = src/minkernel/ntos/init/kernel.c
 
-ALL_C_SRC = $(NTOS_SRC) $(KDCOM_SRC) $(MM_SRC) $(HAL_SRC) $(FS_SRC) $(SHELL_SRC) $(KBDCLASS_SRC) $(MAIN_SRC)
+ALL_C_SRC = $(NTOS_SRC) $(KDCOM_SRC) $(MM_SRC) $(HAL_SRC) $(FS_SRC) $(SHELL_SRC) $(KBDCLASS_SRC) $(MOUCLASS_SRC) $(MAIN_SRC)
 ALL_C_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(ALL_C_SRC))
 
 KERNEL_ELF = $(BUILD)/kernel.elf
@@ -112,6 +113,7 @@ $(shell mkdir -p $(BUILD)/src/minkernel/hals/halx86/i386)
 $(shell mkdir -p $(BUILD)/src/minkernel/fs/evryfs)
 $(shell mkdir -p $(BUILD)/src/shell/explorer)
 $(shell mkdir -p $(BUILD)/src/onecore/drivers/input/keyboard/kbdclass)
+$(shell mkdir -p $(BUILD)/src/onecore/drivers/input/mouse/mouclass)
 $(shell mkdir -p $(BIN))
 $(shell mkdir -p $(ISO)/boot/grub)
 

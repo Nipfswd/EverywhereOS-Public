@@ -9,7 +9,8 @@ Module Name:
 Abstract:
 
     Kernel executive header. Core types, I/O primitives, VGA framebuffer,
-    font, mouse, keyboard, window manager, and physics declarations.
+    font, keyboard, window manager, and physics declarations. Pulls in
+    the mouse class driver's public header for mouse declarations.
 
 Author:
 
@@ -91,17 +92,12 @@ void HandleWindowMouse(WINDOW* w, int win_id);
 
 extern int active_window;
 
-/* ********** Mouse ********** */
+/* ********** Mouse **********
+ * Declarations now live in the mouse class driver's public header;
+ * see src/onecore/drivers/input/mouse/mouclass/mouclass.h
+ */
 
-extern int mouse_x;
-extern int mouse_y;
-extern int mouse_buttons;
-extern int mouse_prev_buttons;
-
-void InitMouse(void);
-void UpdateMouse(void);
-void DrawMouseCursor(void);
-void MouseIsr(void);
+#include "mouclass.h"
 
 /* ********** HAL ********** */
 
