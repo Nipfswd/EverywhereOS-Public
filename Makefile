@@ -62,7 +62,12 @@ MM_SRC = src/minkernel/ntos/mm/mminit.c \
          src/minkernel/ntos/mm/zeropage.c
 
 FS_SRC = src/minkernel/fs/evryfs/ata.c \
-         src/minkernel/fs/evryfs/evryfs.c
+         src/minkernel/fs/evryfs/super.c \
+         src/minkernel/fs/evryfs/dirsup.c \
+         src/minkernel/fs/evryfs/allocsup.c \
+         src/minkernel/fs/evryfs/read.c \
+         src/minkernel/fs/evryfs/write.c \
+         src/minkernel/fs/evryfs/strsup.c
 HAL_SRC = src/minkernel/hals/halx86/halinit.c \
           src/minkernel/hals/halx86/power.c
 HAL_ASM_SRC = src/minkernel/hals/halx86/irq12.asm \

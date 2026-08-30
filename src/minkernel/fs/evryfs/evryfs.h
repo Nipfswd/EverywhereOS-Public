@@ -16,6 +16,17 @@ Abstract:
         LBA 1  -- Root directory (12 x EVRYFS_DIRENT, 480 bytes)
         LBA 2+ -- File data (allocated sequentially)
 
+    The driver itself is split into one module per concern:
+        ata.c      -- ATA PIO sector read/write
+        super.c    -- superblock cache, mount / auto-format
+        dirsup.c   -- directory entry accessor, lookup, listing
+        allocsup.c -- data-LBA allocation
+        read.c     -- EvryFsReadFile
+        write.c    -- EvryFsWriteFile
+        strsup.c   -- freestanding string helpers
+    Only this header is public; cross-module declarations live in
+    evryfsp.h and are private to the driver.
+
 Author:
 
     Noah Juopperi <nipfswd@gmail.com>
@@ -71,7 +82,7 @@ typedef struct {
 int AtaReadSector (uint32_t lba,       uint8_t* buf);
 int AtaWriteSector(uint32_t lba, const uint8_t* buf);
 
-/* ---- Public filesystem API (evryfs.c) ---------------------------------- */
+/* ---- Public filesystem API ----------------------------------------------- */
 
 /*
  * EvryFsInit -- detect disk, read or format superblock + directory.
