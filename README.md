@@ -1,6 +1,6 @@
 # 🌐 Everywhere OS
 
-[![CI](https://github.com/claysanders157-art/Everywhere-OS/actions/workflows/ci.yml/badge.svg)](https://github.com/claysanders157-art/Everywhere-OS/actions/workflows/ci.yml)
+[![CI](https://github.com/Nipfswd/EverywhereOS-Public/actions/workflows/ci.yml/badge.svg)](https://github.com/Nipfswd/EverywhereOS-Public/actions/workflows/ci.yml)
 
 Modern [operating systems](https://en.wikipedia.org/wiki/Operating_system) face a fundamental problem: companies continually release updates to patch issues, fully aware that their systems fall short. Yet they rarely take the step of rethinking their platforms from the ground up. They avoid confronting the truth.
 
@@ -15,4 +15,4 @@ If you want to download our latest release, or just learn more, check out our ho
 Learn more: https://sites.google.com/view/everywhereos/home
 
 Current state:
-![Current OS](docs/imgs/2026-04-20-1305-shell.png)
+![Current OS](docs/imgs/2026-08-30.png)
