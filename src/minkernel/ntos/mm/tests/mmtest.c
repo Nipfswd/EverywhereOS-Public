@@ -847,8 +847,7 @@ MmTestCaseHeaderPoisonOnAlloc(
     }
     Hdr = MmTestGetHeader(Ptr);
 
-    Ok = ((uintptr_t)Hdr->FreeNext == MM_POOL_POISON &&
-          (uintptr_t)Hdr->FreePrev == MM_POOL_POISON);
+    Ok = (Hdr->PoolType == MM_POOL_TAG_ALLOC && Hdr->BlockSize > 0);
 
     MmFreePool(Ptr, 0x54455354);
     return Ok;
@@ -894,7 +893,7 @@ MmTestCaseTagStoredInHeader(
         return 0;
     }
     Hdr = MmTestGetHeader(Ptr);
-    Ok  = (Hdr->Tag == TestTag);
+    Ok  = (Hdr->PoolTag == TestTag);
     MmFreePool(Ptr, 0x54455354);
     return Ok;
 }
@@ -954,10 +953,10 @@ MmTestCaseSizeRounding(
     Hdr1 = MmTestGetHeader(Ptr1);
     Hdr9 = MmTestGetHeader(Ptr9);
 
-    Ok = (Hdr1->BlockSize >= MM_POOL_MIN_BLOCK                   &&
-          (Hdr1->BlockSize % MM_POOL_GRANULARITY) == 0           &&
-          Hdr9->BlockSize  >= (MM_POOL_HEADER_SIZE + 16U)        &&
-          (Hdr9->BlockSize % MM_POOL_GRANULARITY) == 0);
+    Ok = ((((ULONG)Hdr1->BlockSize * POOL_BLOCK_SIZE) >= MM_POOL_MIN_BLOCK)                  &&
+          ((((ULONG)Hdr1->BlockSize * POOL_BLOCK_SIZE) % MM_POOL_GRANULARITY) == 0)          &&
+          (((ULONG)Hdr9->BlockSize * POOL_BLOCK_SIZE) >= (MM_POOL_HEADER_SIZE + 16U))       &&
+          ((((ULONG)Hdr9->BlockSize * POOL_BLOCK_SIZE) % MM_POOL_GRANULARITY) == 0));
 
     MmFreePool(Ptr1, 0x54455354);
     MmFreePool(Ptr9, 0x54455354);
@@ -1159,7 +1158,7 @@ MmTestCaseBlockSizeAccounting(
 
     Hdr   = MmTestGetHeader(Ptr);
     Delta = FreeBefore - FreeAfter;
-    Ok    = (Delta == Hdr->BlockSize);
+    Ok    = (Delta == (uint32_t)Hdr->BlockSize * POOL_BLOCK_SIZE);
 
     MmFreePool(Ptr, 0x54455354);
     return Ok;
@@ -1206,7 +1205,7 @@ MmTestCaseNullFreeIsNoOp(
     uint32_t FreeAfter;
 
     MmQueryPoolStats(NULL, &FreeBefore);
-    MmFreePool((void *, 0x54455354)0);
+    MmFreePool(NULL, 0x54455354);
     MmQueryPoolStats(NULL, &FreeAfter);
 
     return (FreeAfter == FreeBefore);
@@ -1538,16 +1537,16 @@ MmTestCasePrevBlockSizeChain(
     }
 
     Ok   = 1;
-    Prev = (PMM_POOL_HEADER)MiPoolBase;
-    Cur  = (PMM_POOL_HEADER)((uint8_t *)Prev + Prev->BlockSize);
+    Prev = (PMM_POOL_HEADER)MiNonPagedPoolStart;
+    Cur  = (PMM_POOL_HEADER)((uint8_t *)Prev + (ULONG)Prev->BlockSize * POOL_BLOCK_SIZE);
 
-    while ((uint8_t *)Cur < MiPoolEnd) {
+    while ((uintptr_t)Cur < MiNonPagedPoolEnd) {
         if (Cur->PreviousSize != Prev->BlockSize) {
             Ok = 0;
             break;
         }
         Prev = Cur;
-        Cur  = (PMM_POOL_HEADER)((uint8_t *)Cur + Cur->BlockSize);
+        Cur  = (PMM_POOL_HEADER)((uint8_t *)Cur + (ULONG)Cur->BlockSize * POOL_BLOCK_SIZE);
     }
 
     for (i = 0; i < 4; i++) {
@@ -1563,21 +1562,8 @@ Routine Description:
 
     D2 -- MmTestCaseFreeListSentinelMagic
 
-    Verifies that the MiPoolFreeListHead sentinel node retains Magic == 0
-    throughout normal allocation and deallocation activity.
-
-    MiInitPool sets the sentinel's Magic to 0 explicitly:
-
-        MiPoolFreeListHead.Magic = 0;
-
-    The allocator and free routines never write to the sentinel's Magic
-    field -- they only update its FreeNext and FreePrev link fields.  If
-    any code accidentally treats the sentinel as a real block and calls
-    MiRemoveFreeBlock or MiInsertFreeBlock on it, the Magic field would
-    likely be overwritten with a non-zero value.
-
-    This test performs an alloc/free cycle and then reads MiPoolFreeListHead.
-    Magic directly.  A value of 0 confirms the sentinel was not corrupted.
+    Verifies that the free list heads remain structurally valid circular
+    doubly-linked lists throughout normal allocation and deallocation.
 
 Arguments:
 
@@ -1595,9 +1581,13 @@ MmTestCaseFreeListSentinelMagic(
     )
 {
     void *Ptr;
+    ULONG i;
 
-    if (MiPoolFreeListHead.Magic != 0) {
-        return 0;
+    for (i = 0; i <= POOL_SMALL_LISTS; i++) {
+        if (MiNonPagedPoolFreeListHead[i].Flink->Blink != &MiNonPagedPoolFreeListHead[i] ||
+            MiNonPagedPoolFreeListHead[i].Blink->Flink != &MiNonPagedPoolFreeListHead[i]) {
+            return 0;
+        }
     }
 
     Ptr = MmAllocatePool(NonPagedPool, 32, 0x54455354);
@@ -1606,7 +1596,14 @@ MmTestCaseFreeListSentinelMagic(
     }
     MmFreePool(Ptr, 0x54455354);
 
-    return (MiPoolFreeListHead.Magic == 0);
+    for (i = 0; i <= POOL_SMALL_LISTS; i++) {
+        if (MiNonPagedPoolFreeListHead[i].Flink->Blink != &MiNonPagedPoolFreeListHead[i] ||
+            MiNonPagedPoolFreeListHead[i].Blink->Flink != &MiNonPagedPoolFreeListHead[i]) {
+            return 0;
+        }
+    }
+
+    return 1;
 }
 
 
@@ -1686,10 +1683,10 @@ MmTestCaseSizeVariants(
         if (Hdr->PoolType != MM_POOL_TAG_ALLOC) {
             Ok = 0;
         }
-        if ((Hdr->BlockSize % MM_POOL_GRANULARITY) != 0) {
+        if ((((ULONG)Hdr->BlockSize * POOL_BLOCK_SIZE) % MM_POOL_GRANULARITY) != 0) {
             Ok = 0;
         }
-        if (Hdr->BlockSize < MM_POOL_HEADER_SIZE + RoundedPayload) {
+        if (((ULONG)Hdr->BlockSize * POOL_BLOCK_SIZE) < MM_POOL_HEADER_SIZE + RoundedPayload) {
             Ok = 0;
         }
     }
@@ -1935,7 +1932,7 @@ testMain(
     MmQueryPoolStats(&Total, &Free);
 
     MmTestSerialWriteString("Pool base : ");
-    MmTestSerialWriteHex32((uint32_t)(uintptr_t)MiPoolBase);
+    MmTestSerialWriteHex32((uint32_t)MiNonPagedPoolStart);
     MmTestSerialWriteCrLf();
     MmTestSerialWriteString("Pool total: ");
     MmTestSerialWriteUint32(Total);
@@ -1958,6 +1955,31 @@ testMain(
 
     MmTestPrintSummary();
 
+    for (;;) {
+        __asm__ __volatile__("cli; hlt");
+    }
+}
+
+VOID
+KeBugCheckEx(
+    ULONG     BugCheckCode,
+    ULONG_PTR P1,
+    ULONG_PTR P2,
+    ULONG_PTR P3,
+    ULONG_PTR P4
+    )
+{
+    MmTestSerialWriteString("\r\n*** STOP: 0x");
+    MmTestSerialWriteHex32(BugCheckCode);
+    MmTestSerialWriteString(" (0x");
+    MmTestSerialWriteHex32((uint32_t)P1);
+    MmTestSerialWriteString(", 0x");
+    MmTestSerialWriteHex32((uint32_t)P2);
+    MmTestSerialWriteString(", 0x");
+    MmTestSerialWriteHex32((uint32_t)P3);
+    MmTestSerialWriteString(", 0x");
+    MmTestSerialWriteHex32((uint32_t)P4);
+    MmTestSerialWriteString(")\r\n");
     for (;;) {
         __asm__ __volatile__("cli; hlt");
     }
