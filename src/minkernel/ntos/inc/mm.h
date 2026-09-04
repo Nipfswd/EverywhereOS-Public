@@ -128,23 +128,9 @@ typedef struct _LIST_ENTRY {
  * NTSTATUS codes
  * ----------------------------------------------------------------------- */
 
-#define NT_SUCCESS(s)               ((NTSTATUS)(s) >= 0)
-#define STATUS_SUCCESS              ((NTSTATUS)0x00000000L)
-#define STATUS_UNSUCCESSFUL         ((NTSTATUS)0xC0000001L)
-#define STATUS_NOT_IMPLEMENTED      ((NTSTATUS)0xC0000002L)
-#define STATUS_ACCESS_VIOLATION     ((NTSTATUS)0xC0000005L)
-#define STATUS_IN_PAGE_ERROR        ((NTSTATUS)0xC0000006L)
-#define STATUS_INVALID_HANDLE       ((NTSTATUS)0xC0000008L)
-#define STATUS_INVALID_PARAMETER    ((NTSTATUS)0xC000000DL)
-#define STATUS_NO_MEMORY            ((NTSTATUS)0xC0000017L)
-#define STATUS_CONFLICTING_ADDRESSES ((NTSTATUS)0xC0000018L)
-#define STATUS_ACCESS_DENIED        ((NTSTATUS)0xC0000022L)
-#define STATUS_INSUFFICIENT_RESOURCES ((NTSTATUS)0xC000009AL)
-#define STATUS_COMMITMENT_LIMIT     ((NTSTATUS)0xC000012DL)
-#define STATUS_WORKING_SET_QUOTA    ((NTSTATUS)0xC00000A1L)
+#include "ntstatus.h"
+
 #define STATUS_GUARD_PAGE_VIOLATION ((NTSTATUS)0x80000001L)
-#define STATUS_STACK_OVERFLOW       ((NTSTATUS)0xC00000FDL)
-#define STATUS_INVALID_ADDRESS      ((NTSTATUS)0xC0000141L)
 
 /* -----------------------------------------------------------------------
  * Bug-check codes used by Mm

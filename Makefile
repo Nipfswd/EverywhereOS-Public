@@ -87,10 +87,16 @@ SHELL_SRC = src/shell/explorer/desktop.c \
 KBDCLASS_SRC = src/onecore/drivers/input/keyboard/kbdclass/kbdclass.c
 MOUCLASS_SRC = src/onecore/drivers/input/mouse/mouclass/mouclass.c
 
+# Runtime Library (src/minkernel/ntos/rtl)
+RTL_SRC = src/minkernel/ntos/rtl/movemem.c \
+          src/minkernel/ntos/rtl/string.c \
+          src/minkernel/ntos/rtl/bitmapex.c \
+          src/minkernel/ntos/rtl/random.c
+
 # Main entry
 MAIN_SRC = src/minkernel/ntos/init/kernel.c
 
-ALL_C_SRC = $(NTOS_SRC) $(KDCOM_SRC) $(MM_SRC) $(HAL_SRC) $(FS_SRC) $(SHELL_SRC) $(KBDCLASS_SRC) $(MOUCLASS_SRC) $(MAIN_SRC)
+ALL_C_SRC = $(NTOS_SRC) $(KDCOM_SRC) $(MM_SRC) $(HAL_SRC) $(FS_SRC) $(SHELL_SRC) $(KBDCLASS_SRC) $(MOUCLASS_SRC) $(RTL_SRC) $(MAIN_SRC)
 ALL_C_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(ALL_C_SRC))
 
 KERNEL_ELF = $(BUILD)/kernel.elf
@@ -111,6 +117,7 @@ QEMU_TESTFLAGS  = -display none -m 64M -no-reboot
 
 $(shell mkdir -p $(BUILD)/src/minkernel/ntos/init)
 $(shell mkdir -p $(BUILD)/src/minkernel/ntos/ke)
+$(shell mkdir -p $(BUILD)/src/minkernel/ntos/rtl)
 $(shell mkdir -p $(BUILD)/src/minkernel/boot/kdcom)
 $(shell mkdir -p $(BUILD)/src/minkernel/ntos/mm)
 $(shell mkdir -p $(BUILD)/src/minkernel/ntos/mm/tests)

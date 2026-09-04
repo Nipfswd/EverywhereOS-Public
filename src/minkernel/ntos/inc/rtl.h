@@ -1,0 +1,326 @@
+/*++
+
+Copyright (c) 2026  Everywhere Computing, Inc. All Rights Reserved.
+
+Module Name:
+
+    rtl.h
+
+Abstract:
+
+    Runtime Library (RTL) definitions and public prototypes.
+
+Author:
+
+    Noah Juopperi <nipfswd@gmail.com>
+
+Environment:
+
+    Kernel-mode and User-mode.
+
+--*/
+
+#ifndef _RTL_H_
+#define _RTL_H_
+
+#include "mm.h"
+#include "ntstatus.h"
+
+/* -----------------------------------------------------------------------
+ * Character and String Types
+ * ----------------------------------------------------------------------- */
+
+typedef uint16_t        WCHAR;
+typedef WCHAR          *PWSTR;
+typedef const WCHAR    *PCWSTR;
+typedef CHAR           *PSTR;
+typedef const CHAR     *PCSTR;
+
+typedef struct _STRING {
+    USHORT Length;
+    USHORT MaximumLength;
+    PCHAR  Buffer;
+} STRING, *PSTRING, ANSI_STRING, *PANSI_STRING;
+
+typedef const STRING      *PCSTRING;
+typedef const ANSI_STRING *PCANSI_STRING;
+
+typedef struct _UNICODE_STRING {
+    USHORT Length;
+    USHORT MaximumLength;
+    PWSTR  Buffer;
+} UNICODE_STRING, *PUNICODE_STRING;
+
+typedef const UNICODE_STRING *PCUNICODE_STRING;
+
+#define RTL_CONSTANT_STRING(s) \
+    { sizeof(s) - sizeof((s)[0]), sizeof(s), (s) }
+
+/* -----------------------------------------------------------------------
+ * Bitmap Header
+ * ----------------------------------------------------------------------- */
+
+typedef struct _RTL_BITMAP {
+    ULONG  SizeOfBitMap;
+    PULONG Buffer;
+} RTL_BITMAP, *PRTL_BITMAP;
+
+/* -----------------------------------------------------------------------
+ * Memory Manipulation Primitives
+ * ----------------------------------------------------------------------- */
+
+VOID
+RtlCopyMemory(
+    PVOID       Destination,
+    const VOID *Source,
+    SIZE_T      Length
+    );
+
+VOID
+RtlMoveMemory(
+    PVOID       Destination,
+    const VOID *Source,
+    SIZE_T      Length
+    );
+
+VOID
+RtlZeroMemory(
+    PVOID  Destination,
+    SIZE_T Length
+    );
+
+VOID
+RtlFillMemory(
+    PVOID  Destination,
+    SIZE_T Length,
+    UCHAR  Fill
+    );
+
+SIZE_T
+RtlCompareMemory(
+    const VOID *Source1,
+    const VOID *Source2,
+    SIZE_T      Length
+    );
+
+BOOLEAN
+RtlEqualMemory(
+    const VOID *Source1,
+    const VOID *Source2,
+    SIZE_T      Length
+    );
+
+/* -----------------------------------------------------------------------
+ * String Manipulation Primitives
+ * ----------------------------------------------------------------------- */
+
+VOID
+RtlInitString(
+    PSTRING DestinationString,
+    PCSTR   SourceString
+    );
+
+VOID
+RtlInitAnsiString(
+    PANSI_STRING DestinationString,
+    PCSTR        SourceString
+    );
+
+VOID
+RtlInitUnicodeString(
+    PUNICODE_STRING DestinationString,
+    PCWSTR          SourceString
+    );
+
+LONG
+RtlCompareString(
+    const STRING *String1,
+    const STRING *String2,
+    BOOLEAN       CaseInSensitive
+    );
+
+LONG
+RtlCompareUnicodeString(
+    PCUNICODE_STRING String1,
+    PCUNICODE_STRING String2,
+    BOOLEAN          CaseInSensitive
+    );
+
+BOOLEAN
+RtlEqualString(
+    const STRING *String1,
+    const STRING *String2,
+    BOOLEAN       CaseInSensitive
+    );
+
+BOOLEAN
+RtlEqualUnicodeString(
+    PCUNICODE_STRING String1,
+    PCUNICODE_STRING String2,
+    BOOLEAN          CaseInSensitive
+    );
+
+VOID
+RtlCopyString(
+    PSTRING       DestinationString,
+    const STRING *SourceString
+    );
+
+VOID
+RtlCopyUnicodeString(
+    PUNICODE_STRING  DestinationString,
+    PCUNICODE_STRING SourceString
+    );
+
+NTSTATUS
+RtlAppendStringToString(
+    PSTRING       Destination,
+    const STRING *Source
+    );
+
+NTSTATUS
+RtlAppendUnicodeStringToString(
+    PUNICODE_STRING  Destination,
+    PCUNICODE_STRING Source
+    );
+
+NTSTATUS
+RtlAnsiStringToUnicodeString(
+    PUNICODE_STRING DestinationString,
+    PCANSI_STRING   SourceString,
+    BOOLEAN         AllocateDestinationString
+    );
+
+NTSTATUS
+RtlUnicodeStringToAnsiString(
+    PANSI_STRING     DestinationString,
+    PCUNICODE_STRING SourceString,
+    BOOLEAN          AllocateDestinationString
+    );
+
+VOID
+RtlFreeAnsiString(
+    PANSI_STRING AnsiString
+    );
+
+VOID
+RtlFreeUnicodeString(
+    PUNICODE_STRING UnicodeString
+    );
+
+CHAR
+RtlUpperChar(
+    CHAR Character
+    );
+
+WCHAR
+RtlUpcaseUnicodeChar(
+    WCHAR SourceCharacter
+    );
+
+NTSTATUS
+RtlIntegerToChar(
+    ULONG Value,
+    ULONG Radix,
+    LONG  OutputLength,
+    PSTR  String
+    );
+
+NTSTATUS
+RtlCharToInteger(
+    PCSTR  String,
+    ULONG  Radix,
+    PULONG Value
+    );
+
+/* -----------------------------------------------------------------------
+ * Bitmap Primitives
+ * ----------------------------------------------------------------------- */
+
+VOID
+RtlInitializeBitMap(
+    PRTL_BITMAP BitMapHeader,
+    PULONG      BitMapBuffer,
+    ULONG       SizeOfBitMap
+    );
+
+VOID
+RtlSetBit(
+    PRTL_BITMAP BitMapHeader,
+    ULONG       BitPosition
+    );
+
+VOID
+RtlClearBit(
+    PRTL_BITMAP BitMapHeader,
+    ULONG       BitPosition
+    );
+
+BOOLEAN
+RtlTestBit(
+    PRTL_BITMAP BitMapHeader,
+    ULONG       BitPosition
+    );
+
+VOID
+RtlSetBits(
+    PRTL_BITMAP BitMapHeader,
+    ULONG       StartingIndex,
+    ULONG       NumberToSet
+    );
+
+VOID
+RtlClearBits(
+    PRTL_BITMAP BitMapHeader,
+    ULONG       StartingIndex,
+    ULONG       NumberToClear
+    );
+
+ULONG
+RtlFindClearBits(
+    PRTL_BITMAP BitMapHeader,
+    ULONG       NumberToFind,
+    ULONG       HintIndex
+    );
+
+ULONG
+RtlFindSetBits(
+    PRTL_BITMAP BitMapHeader,
+    ULONG       NumberToFind,
+    ULONG       HintIndex
+    );
+
+ULONG
+RtlNumberOfClearBits(
+    PRTL_BITMAP BitMapHeader
+    );
+
+ULONG
+RtlNumberOfSetBits(
+    PRTL_BITMAP BitMapHeader
+    );
+
+BOOLEAN
+RtlAreBitsClear(
+    PRTL_BITMAP BitMapHeader,
+    ULONG       StartingIndex,
+    ULONG       Length
+    );
+
+BOOLEAN
+RtlAreBitsSet(
+    PRTL_BITMAP BitMapHeader,
+    ULONG       StartingIndex,
+    ULONG       Length
+    );
+
+/* -----------------------------------------------------------------------
+ * Random Number Generator Primitives
+ * ----------------------------------------------------------------------- */
+
+ULONG
+RtlRandom(
+    PULONG Seed
+    );
+
+#endif /* _RTL_H_ */
