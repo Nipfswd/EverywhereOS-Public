@@ -23,6 +23,7 @@ Environment:
 --*/
 
 #include "ke.h"
+#include "ex.h"
 #include "explorer.h"
 #include "evryfs.h"
 
@@ -47,6 +48,7 @@ Return Value:
 void kernelMain(uint32_t* mbi) {
     KdComPortInitialize();
     MmInit(mbi);
+    ExInitSystem();
     SetupFramebuffer(mbi);
     InitFont();
     InitMouse();

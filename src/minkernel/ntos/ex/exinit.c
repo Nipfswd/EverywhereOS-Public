@@ -1,0 +1,34 @@
+/*++
+
+Copyright (c) 2026  Everywhere Computing, Inc. All Rights Reserved.
+
+Module Name:
+
+    exinit.c
+
+Abstract:
+
+    Executive subsystem initialization.
+
+Author:
+
+    Noah Juopperi <nipfswd@gmail.com>
+
+Environment:
+
+    Kernel-mode only.
+
+--*/
+
+#include "../inc/ex.h"
+
+extern LARGE_INTEGER ExpLuid;
+
+BOOLEAN
+ExInitSystem(
+    VOID
+    )
+{
+    ExpLuid.QuadPart = 1000;
+    return TRUE;
+}
