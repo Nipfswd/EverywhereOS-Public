@@ -1,6 +1,6 @@
 /*++
 
-Copyright (c) 2026  O&V Soft. All Rights Reserved.
+Copyright (c) 2026  Everywhere-Computing, Inc. All Rights Reserved.
 
 Module Name:
 
