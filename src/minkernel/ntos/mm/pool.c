@@ -1,6 +1,6 @@
 /*++
 
-Copyright (c) 2026  Everywhere Computing, Inc. All Rights Reserved.
+Copyright (c) 2026  O&V Soft. All Rights Reserved.
 
 Module Name:
 
@@ -8,8 +8,7 @@ Module Name:
 
 Abstract:
 
-    Robust, self-contained non-paged pool allocator with block splitting 
-    and full bi-directional coalescing (KISS principle).
+    Self-contained non-paged pool allocator.
 
 Author(s):
 
@@ -31,12 +30,8 @@ Environment:
 #define POOL_TYPE_FREE      0x46524545 // 'FREE'
 #define POOL_TYPE_ALLOCATED 0x414C4C4F // 'ALLO'
 
-#define POOL_HEADER_SIZE sizeof(POOL_HEADER)
-#define POOL_MIN_BLOCK   32
-
 static ULONG_PTR MiPoolStart = 0;
 static ULONG_PTR MiPoolEnd   = 0;
-static LIST_ENTRY MiFreeLists[POOL_SMALL_LISTS + 1];
 
 //
 // Helper: Round up block size and align
@@ -46,12 +41,12 @@ MiRoundBlockSize(
     ULONG NumberOfBytes
     )
 {
-    ULONG TotalSize = NumberOfBytes + POOL_HEADER_SIZE;
+    ULONG TotalSize = NumberOfBytes + MM_POOL_HEADER_SIZE;
     if (TotalSize % 8 != 0) {
         TotalSize = ((TotalSize + 7) & ~7);
     }
-    if (TotalSize < POOL_MIN_BLOCK) {
-        TotalSize = POOL_MIN_BLOCK;
+    if (TotalSize < MM_POOL_MIN_BLOCK) {
+        TotalSize = MM_POOL_MIN_BLOCK;
     }
     return TotalSize;
 }
@@ -86,14 +81,14 @@ MiInitializeNonPagedPool(
     ULONG        i;
 
     for (i = 0; i <= POOL_SMALL_LISTS; i++) {
-        InitializeListHead(&MiFreeLists[i]);
+        InitializeListHead(&MiNonPagedPoolFreeListHead[i]);
     }
 
     MiPoolStart = PoolBase;
     MiPoolEnd   = PoolBase + PoolSize;
     AlignedSize = PoolSize & ~7;
 
-    if (AlignedSize < POOL_MIN_BLOCK) {
+    if (AlignedSize < MM_POOL_MIN_BLOCK) {
         KeBugCheckEx(MEMORY_MANAGEMENT, 0x31, PoolBase, PoolSize, 0);
     }
 
@@ -104,7 +99,7 @@ MiInitializeNonPagedPool(
     InitialBlock->PoolTag      = 0;
 
     Index = MiPoolIndexFromSize(AlignedSize);
-    InsertHeadList(&MiFreeLists[Index], &InitialBlock->FreeLinks);
+    InsertHeadList(&MiNonPagedPoolFreeListHead[Index], (PLIST_ENTRY)&InitialBlock->FreeNext);
 }
 
 //
@@ -138,21 +133,21 @@ MmAllocatePool(
 
     // Find a suitable block from small lists or overflow
     for (ScanIndex = MiPoolIndexFromSize(TotalSize); ScanIndex <= POOL_SMALL_LISTS; ScanIndex++) {
-        if (!IsListEmpty(&MiFreeLists[ScanIndex])) {
+        if (!IsListEmpty(&MiNonPagedPoolFreeListHead[ScanIndex])) {
             FoundIndex = ScanIndex;
             break;
         }
     }
 
-    if (FoundIndex == 0 || IsListEmpty(&MiFreeLists[FoundIndex])) {
+    if (FoundIndex == 0 || IsListEmpty(&MiNonPagedPoolFreeListHead[FoundIndex])) {
         UNLOCK_POOL();
         return NULL;
     }
 
-    ListEntry = MiFreeLists[FoundIndex].Flink;
+    ListEntry = MiNonPagedPoolFreeListHead[FoundIndex].Flink;
     RemoveEntryList(ListEntry);
 
-    Block = CONTAINING_RECORD(ListEntry, POOL_HEADER, FreeLinks);
+    Block = CONTAINING_RECORD(ListEntry, POOL_HEADER, FreeNext);
 
     // Sanity check
     if ((ULONG_PTR)Block < MiPoolStart || (ULONG_PTR)Block >= MiPoolEnd || Block->PoolType != POOL_TYPE_FREE) {
@@ -162,7 +157,7 @@ MmAllocatePool(
 
     // Check if block can be split
     RemainingSize = Block->BlockSize - TotalSize;
-    if (RemainingSize >= POOL_MIN_BLOCK) {
+    if (RemainingSize >= MM_POOL_MIN_BLOCK) {
         RemainingBlock = (PPOOL_HEADER)((PUCHAR)Block + TotalSize);
         RemainingBlock->PreviousSize = TotalSize;
         RemainingBlock->BlockSize    = RemainingSize;
@@ -178,7 +173,7 @@ MmAllocatePool(
         }
 
         RemIndex = MiPoolIndexFromSize(RemainingSize);
-        InsertHeadList(&MiFreeLists[RemIndex], &RemainingBlock->FreeLinks);
+        InsertHeadList(&MiNonPagedPoolFreeListHead[RemIndex], (PLIST_ENTRY)&RemainingBlock->FreeNext);
     } else {
         // Take entire block, update next block's PreviousSize indicator if needed
         PPOOL_HEADER NextBlock = (PPOOL_HEADER)((PUCHAR)Block + Block->BlockSize);
@@ -192,7 +187,7 @@ MmAllocatePool(
 
     UNLOCK_POOL();
 
-    return (PVOID)((PUCHAR)Block + POOL_HEADER_SIZE);
+    return (PVOID)((PUCHAR)Block + MM_POOL_HEADER_SIZE);
 }
 
 //
@@ -216,7 +211,7 @@ MmFreePool(
         return;
     }
 
-    Block = (PPOOL_HEADER)((PUCHAR)P - POOL_HEADER_SIZE);
+    Block = (PPOOL_HEADER)((PUCHAR)P - MM_POOL_HEADER_SIZE);
 
     LOCK_POOL();
 
@@ -237,7 +232,7 @@ MmFreePool(
     //
     NextBlock = (PPOOL_HEADER)((PUCHAR)Block + TotalSize);
     if ((ULONG_PTR)NextBlock < MiPoolEnd && NextBlock->PoolType == POOL_TYPE_FREE) {
-        RemoveEntryList(&NextBlock->FreeLinks);
+        RemoveEntryList((PLIST_ENTRY)&NextBlock->FreeNext);
         TotalSize += NextBlock->BlockSize;
     }
 
@@ -247,7 +242,7 @@ MmFreePool(
     if (Block->PreviousSize != 0) {
         PrevBlock = (PPOOL_HEADER)((PUCHAR)Block - Block->PreviousSize);
         if ((ULONG_PTR)PrevBlock >= MiPoolStart && PrevBlock->PoolType == POOL_TYPE_FREE) {
-            RemoveEntryList(&PrevBlock->FreeLinks);
+            RemoveEntryList((PLIST_ENTRY)&PrevBlock->FreeNext);
             PrevBlock->BlockSize += TotalSize;
             Block = PrevBlock;
             TotalSize = Block->BlockSize;
@@ -267,7 +262,7 @@ MmFreePool(
 
     // Insert back into free lists
     FreeIndex = MiPoolIndexFromSize(TotalSize);
-    InsertHeadList(&MiFreeLists[FreeIndex], &Block->FreeLinks);
+    InsertHeadList(&MiNonPagedPoolFreeListHead[FreeIndex], (PLIST_ENTRY)&Block->FreeNext);
 
     UNLOCK_POOL();
 }
