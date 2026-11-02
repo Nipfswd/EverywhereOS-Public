@@ -64,7 +64,7 @@ ObCreateObjectType(
     // Allocate memory for the object type structure from non-paged pool.
     // Using tag 'pybO' (ObjT) for tracking.
     //
-    ObjectType = (POBJECT_TYPE)MmAllocatePool(PoolTypeNonPaged, sizeof(OBJECT_TYPE), 0x7079624f); // 'pybO'
+    ObjectType = (POBJECT_TYPE)MmAllocatePool(NonPagedPool, sizeof(OBJECT_TYPE), 0x7079624f); // 'pybO'
     
     if (ObjectType == NULL) {
         return STATUS_NO_MEMORY;
