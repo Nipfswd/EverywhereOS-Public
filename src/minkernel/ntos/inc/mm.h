@@ -16,6 +16,7 @@ Abstract:
 Author:
 
     Noah Juopperi <nipfswd@gmail.com>
+    Vlad Lymar <ggcc98765432110@gmail.com>
 
 Environment:
 
@@ -62,6 +63,8 @@ typedef USHORT     *PUSHORT;
 typedef UCHAR      *PUCHAR;
 typedef CHAR       *PCHAR;
 typedef PVOID      *PPVOID;
+typedef BOOLEAN    *PBOOLEAN;
+typedef ULONG       CLONG;
 
 typedef union _LARGE_INTEGER {
     struct {
@@ -480,16 +483,12 @@ typedef struct _MDL {
 #define POOL_SMALL_LISTS    ((ULONG)(POOL_MAX_BLOCK_SIZE / POOL_BLOCK_SIZE))
 
 typedef struct _POOL_HEADER {
-    union {
-        struct {
-            USHORT PreviousSize : 9;
-            USHORT PoolIndex    : 7;
-            USHORT BlockSize    : 9;
-            USHORT PoolType     : 7;
-        };
-        ULONG Ulong1;
-    };
-    ULONG PoolTag;
+    ULONG PreviousSize;  
+    ULONG BlockSize;    
+    ULONG PoolType;       
+    ULONG PoolTag;       
+    struct _POOL_HEADER *FreeNext;       
+    struct _POOL_HEADER *FreePrev; 
 } POOL_HEADER, *PPOOL_HEADER;
 
 //
@@ -500,6 +499,11 @@ typedef PPOOL_HEADER PMM_POOL_HEADER;
 
 #define MM_POOL_HEADER_SIZE  ((ULONG)sizeof(POOL_HEADER))
 #define MM_POOL_MIN_BLOCK    (MM_POOL_HEADER_SIZE + POOL_BLOCK_SIZE)
+
+#ifndef CONTAINING_RECORD
+#define CONTAINING_RECORD(address, type, field) \
+    ((type *)((PUCHAR)(address) - (ULONG_PTR)(&((type *)0)->field)))
+#endif
 
 /* -----------------------------------------------------------------------
  * Exported globals
