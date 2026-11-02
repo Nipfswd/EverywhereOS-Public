@@ -8,7 +8,7 @@ Module Name:
 
 Abstract:
 
-    Shell command input and execution (clear, credits, snake, notes).
+    Shell command input and execution (clear, credits, snake, notes, files, mktest,reboot).
 
 Author:
 
@@ -110,7 +110,7 @@ void ShellExec(void) {
     if (StrEq(shell_input, "help")) {
         const char* msg;
         int i = 0;
-        msg = "Commands: clear, credits, snake,\nnotes, files, mktest,\nreboot\n";
+        msg = "Commands: clear, credits, snake,\nnotes, files, mktest, reboot\n";
         while (msg[i] && i < 63) { shell_output[i] = msg[i]; i++; }
         shell_output[i] = 0;
         shell_has_output = 1;
