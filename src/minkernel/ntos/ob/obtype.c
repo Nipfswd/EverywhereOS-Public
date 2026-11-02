@@ -10,7 +10,7 @@ Abstract:
 
     Object type management and creation routines.
 
-Author:
+Author(s):
 
     Vlad Lymar <ggcc98765432110@gmail.com>
 
@@ -19,9 +19,17 @@ Environment:
     Kernel-mode only.
 
 --*/
-#include "../inc/ob.h"
 
-static OBJECT_TYPE FileType;
+#include "../inc/ob.h"
+#include "../inc/mm.h"
+
+//
+// Maximum number of registered object types in the system
+//
+#define MAX_OBJECT_TYPES 32
+
+static POBJECT_TYPE ObpObjectTypes[MAX_OBJECT_TYPES];
+static ULONG ObpObjectTypeCount = 0;
 
 /*++
 
@@ -40,20 +48,46 @@ Return Value:
     NTSTATUS - Status of the operation.
 
 --*/
-
 NTSTATUS
 ObCreateObjectType(
     PCWSTR       TypeNameString,
     MM_POOL_TYPE PoolType
 )
 {
-    (VOID)TypeNameString;
+    POBJECT_TYPE ObjectType;
 
-    FileType.PoolType                 = PoolType;
-    FileType.TotalNumberOfObjects     = 0;
-    FileType.TotalNumberOfHandles     = 0;
-    FileType.HighWaterNumberOfObjects = 0;
-    FileType.HighWaterNumberOfHandles = 0;
+    if (TypeNameString == NULL || ObpObjectTypeCount >= MAX_OBJECT_TYPES) {
+        return STATUS_INSUFFICIENT_RESOURCES;
+    }
+
+    //
+    // Allocate memory for the object type structure from non-paged pool.
+    // Using tag 'pybO' (ObjT) for tracking.
+    //
+    ObjectType = (POBJECT_TYPE)MmAllocatePool(PoolTypeNonPaged, sizeof(OBJECT_TYPE), 0x7079624f); // 'pybO'
+    
+    if (ObjectType == NULL) {
+        return STATUS_NO_MEMORY;
+    }
+
+    //
+    // Initialize the UNICODE_STRING for the object type name
+    //
+    RtlInitUnicodeString(&ObjectType->TypeName, TypeNameString);
+
+    //
+    // Initialize counters and pool type
+    //
+    ObjectType->TotalNumberOfObjects     = 0;
+    ObjectType->TotalNumberOfHandles     = 0;
+    ObjectType->HighWaterNumberOfObjects = 0;
+    ObjectType->HighWaterNumberOfHandles = 0;
+    ObjectType->PoolType                 = (ULONG)PoolType;
+
+    //
+    // Register the type in the global array
+    //
+    ObpObjectTypes[ObpObjectTypeCount++] = ObjectType;
 
     return STATUS_SUCCESS;
 }
@@ -79,12 +113,30 @@ ObReferenceObjectTypeByName(
     PCWSTR TypeNameString
 )
 {
+    ULONG i;
+    UNICODE_STRING SearchString;
+
     if (TypeNameString == NULL) {
         return NULL;
     }
 
-    if (RtlCompareWcharCaseInsensitive(TypeNameString, L"File") == 0) {
-        return &FileType;
+    //
+    // Initialize a temporary unicode string for comparison
+    //
+    RtlInitUnicodeString(&SearchString, TypeNameString);
+
+    //
+    // Search through all registered object types
+    //
+    for (i = 0; i < ObpObjectTypeCount; i++) {
+        POBJECT_TYPE ObjectType = ObpObjectTypes[i];
+        
+        //
+        // Compare names case-insensitively using Rtl routines
+        //
+        if (RtlCompareUnicodeString(&ObjectType->TypeName, &SearchString, TRUE) == 0) {
+            return ObjectType;
+        }
     }
 
     return NULL;
