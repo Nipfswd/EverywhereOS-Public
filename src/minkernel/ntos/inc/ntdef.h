@@ -8,7 +8,7 @@ Module Name:
 
 Abstract:
 
-    Basic type definitions and macros for the NT-like kernel.
+    Basic type definitions and macros.
 
 Author:
 
@@ -27,14 +27,20 @@ Environment:
  * Calling Conventions
  * ----------------------------------------------------------------------- */
 
+#ifndef NTAPI
 #define NTAPI
+#endif
 
-#define NTSYSAPI
-
+#ifndef IN
 #define IN
+#endif
 
+#ifndef OUT
 #define OUT
+#endif
 
+#ifndef OPTIONAL
 #define OPTIONAL
+#endif
 
 #endif /* _NTDEF_H_ */

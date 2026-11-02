@@ -19,8 +19,9 @@ Environment:
     Kernel-mode only.
 
 --*/
-
 #include "../inc/ob.h"
+
+static OBJECT_TYPE FileType;
 
 /*++
 
@@ -36,10 +37,9 @@ Arguments:
 
 Return Value:
 
-    Pointer to the newly created OBJECT_TYPE structure, or NULL on failure.
+    NTSTATUS - Status of the operation.
 
 --*/
-static OBJECT_TYPE FileType;
 
 NTSTATUS
 ObCreateObjectType(
@@ -56,4 +56,36 @@ ObCreateObjectType(
     FileType.HighWaterNumberOfHandles = 0;
 
     return STATUS_SUCCESS;
+}
+
+/*++
+
+Routine Description:
+
+    Retrieves a system object type descriptor by its name, searching
+    among the registered object types.
+
+Arguments:
+
+    TypeNameString - Supplies the name of the object type to look up.
+
+Return Value:
+
+    POBJECT_TYPE - Pointer to the object type descriptor, or NULL if not found.
+
+--*/
+POBJECT_TYPE
+ObReferenceObjectTypeByName(
+    PCWSTR TypeNameString
+)
+{
+    if (TypeNameString == NULL) {
+        return NULL;
+    }
+
+    if (RtlCompareWcharCaseInsensitive(TypeNameString, L"File") == 0) {
+        return &FileType;
+    }
+
+    return NULL;
 }

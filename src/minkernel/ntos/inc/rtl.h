@@ -13,6 +13,7 @@ Abstract:
 Author:
 
     Noah Juopperi <nipfswd@gmail.com>
+    Vlad Lymar <ggcc98765432110@gmail.com>
 
 Environment:
 
@@ -233,6 +234,30 @@ RtlCharToInteger(
     PULONG Value
     );
 
+/*++
+
+Routine Description:
+
+    Compares two wide character strings case-insensitively.
+
+Arguments:
+
+    String1 - Supplies the first string.
+    String2 - Supplies the second string.
+
+Return Value:
+
+    0   - Strings are equal.
+    < 0 - String1 < String2.
+    > 0 - String1 > String2.
+
+--*/
+LONG
+RtlCompareWcharCaseInsensitive(
+    PCWSTR String1,
+    PCWSTR String2
+);
+
 /* -----------------------------------------------------------------------
  * Bitmap Primitives
  * ----------------------------------------------------------------------- */
@@ -334,8 +359,6 @@ typedef struct _RTL_GENERIC_TABLE {
     ULONG LastIndexFound;
     ULONG NumberOfElements;
     PVOID CompareRoutine;
-    PVOID AllocateRoutine;
-    PVOID FreeRoutine;
     PVOID TableContext;
     ULONG LastElementIndex;
 } RTL_GENERIC_TABLE, *PRTL_GENERIC_TABLE;
@@ -374,8 +397,6 @@ VOID
 RtlInitializeGenericTable(
     PRTL_GENERIC_TABLE          Table,
     PRTL_GENERIC_COMPARE_ROUTINE CompareRoutine,
-    PRTL_GENERIC_ALLOCATE_ROUTINE AllocateRoutine,
-    PRTL_GENERIC_FREE_ROUTINE     FreeRoutine,
     PVOID                       TableContext
     );
 
@@ -387,20 +408,6 @@ RtlNumberGenericTableElements(
 BOOLEAN
 RtlIsGenericTableEmpty(
     PRTL_GENERIC_TABLE Table
-    );
-
-PVOID
-NTAPI
-RtlGenericTableAllocate(
-    PRTL_GENERIC_TABLE Table,
-    CLONG ByteSize
-    );
-
-VOID
-NTAPI
-RtlGenericTableFree(
-    PRTL_GENERIC_TABLE Table,
-    PVOID Buffer
     );
 
 LONG

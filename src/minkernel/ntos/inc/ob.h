@@ -1,14 +1,14 @@
 /*++
 
-Copyright (c) 2026  O&V Soff. All Rights Reserved.
+Copyright (c) 2026  O&V Soft. All Rights Reserved.
 
 Module Name:
 
-    ntstatus.h
+    ob.h
 
 Abstract:
 
-    Constant definitions for the NTSTATUS type.
+    Constant definitions and primitives for the Object Manager.
 
 Author:
 
@@ -16,7 +16,7 @@ Author:
 
 Environment:
 
-    Kernel mode.
+    Kernel-mode only.
 
 --*/
 
@@ -65,6 +65,11 @@ NTSTATUS
 ObCreateObjectType(
     PCWSTR       TypeNameString,
     MM_POOL_TYPE PoolType
+);
+
+POBJECT_TYPE
+ObReferenceObjectTypeByName(
+    PCWSTR TypeNameString
 );
 
 #endif // _OB_H_
