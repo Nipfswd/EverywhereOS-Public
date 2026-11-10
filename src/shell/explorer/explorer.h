@@ -15,7 +15,8 @@ Author:
 
     Noah Juopperi <nipfswd@gmail.com>
     Clay Sanders (made the first version of the kernel) <claylikepython@yahoo.com>
-
+    Vlad Lymar <ggcc98765432110@gmail.com>
+    
 Environment:
 
     User-mode
@@ -26,7 +27,7 @@ Environment:
 #define _EXPLORER_H_
 
 #include "ke.h"
-#include "evryfs.h"
+#include "io.h"
 
 /* ********** Window instances (defined in base/ntos/ke/window.c) ********** */
 
@@ -34,6 +35,7 @@ extern WINDOW ShellWin;
 extern WINDOW NotesWin;
 extern WINDOW SnakeWin;
 extern WINDOW FilesWin;
+extern WINDOW RegeditWin;
 
 /* ********** Desktop ********** */
 
@@ -102,5 +104,19 @@ extern int food_y;
 void SnakeInit(void);
 void SnakeStep(void);
 void SnakeDraw(void);
+
+/* ********* Regedit ******** */
+
+extern char reg_input_name[32];
+extern int  reg_name_len;
+
+extern char reg_input_data[32];
+extern int  reg_data_len;
+
+void RegeditInit(void);
+void RegeditHandleClick(int mx, int my);
+void RegeditHandleKey(int scancode);
+void RegeditHandleChar(char ch);
+void RegeditDraw(void);
 
 #endif /* _EXPLORER_H_ */

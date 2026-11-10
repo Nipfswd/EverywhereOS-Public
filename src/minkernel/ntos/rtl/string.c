@@ -13,6 +13,7 @@ Abstract:
 Author:
 
     Noah Juopperi <nipfswd@gmail.com>
+    Vlad Lymar <ggcc98765432110@gmail.com>
 
 Environment:
 
@@ -20,6 +21,7 @@ Environment:
 
 --*/
 
+#include "../inc/ntdef.h"
 #include "../inc/rtl.h"
 
 CHAR
@@ -261,8 +263,6 @@ RtlAppendUnicodeStringToString(
     return STATUS_SUCCESS;
 }
 
-#define RTL_TAG_STRING 0x536C7452UL /* 'RtlS' */
-
 NTSTATUS
 RtlAnsiStringToUnicodeString(
     PUNICODE_STRING DestinationString,
@@ -276,9 +276,9 @@ RtlAnsiStringToUnicodeString(
     Length = (USHORT)(SourceString->Length * sizeof(WCHAR));
     if (AllocateDestinationString) {
         DestinationString->MaximumLength = (USHORT)(Length + sizeof(WCHAR));
-        DestinationString->Buffer = (PWSTR)MmAllocatePool(NonPagedPool,
-                                                          DestinationString->MaximumLength,
-                                                          RTL_TAG_STRING);
+        
+        DestinationString->Buffer = (PWSTR)RtlAllocateHeap(DestinationString->MaximumLength);
+        
         if (DestinationString->Buffer == NULL) {
             return STATUS_NO_MEMORY;
         }
@@ -311,9 +311,9 @@ RtlUnicodeStringToAnsiString(
     Characters = (USHORT)(SourceString->Length / sizeof(WCHAR));
     if (AllocateDestinationString) {
         DestinationString->MaximumLength = (USHORT)(Characters + 1);
-        DestinationString->Buffer = (PCHAR)MmAllocatePool(NonPagedPool,
-                                                          DestinationString->MaximumLength,
-                                                          RTL_TAG_STRING);
+        
+        DestinationString->Buffer = (PCHAR)RtlAllocateHeap(DestinationString->MaximumLength);
+        
         if (DestinationString->Buffer == NULL) {
             return STATUS_NO_MEMORY;
         }
@@ -340,7 +340,7 @@ RtlFreeAnsiString(
     )
 {
     if (AnsiString && AnsiString->Buffer) {
-        MmFreePool(AnsiString->Buffer, RTL_TAG_STRING);
+        RtlFreeHeap(AnsiString->Buffer);
         AnsiString->Buffer = NULL;
         AnsiString->Length = 0;
         AnsiString->MaximumLength = 0;
@@ -353,7 +353,7 @@ RtlFreeUnicodeString(
     )
 {
     if (UnicodeString && UnicodeString->Buffer) {
-        MmFreePool(UnicodeString->Buffer, RTL_TAG_STRING);
+        RtlFreeHeap(UnicodeString->Buffer);
         UnicodeString->Buffer = NULL;
         UnicodeString->Length = 0;
         UnicodeString->MaximumLength = 0;
@@ -462,4 +462,31 @@ RtlCharToInteger(
 
     *Value = Result;
     return STATUS_SUCCESS;
+}
+
+LONG
+RtlCompareWcharCaseInsensitive(
+    PCWSTR String1,
+    PCWSTR String2
+)
+{
+    while (*String1 && *String2) {
+        WCHAR c1 = *String1;
+        WCHAR c2 = *String2;
+
+        if (c1 >= 'A' && c1 <= 'Z') c1 += ('a' - 'A');
+        if (c2 >= 'A' && c2 <= 'Z') c2 += ('a' - 'A');
+
+        if (c1 != c2) {
+            return (c1 < c2) ? -1 : 1;
+        }
+
+        String1++;
+        String2++;
+    }
+
+    if (*String1 == *String2) {
+        return 0;
+    }
+    return (*String1 < *String2) ? -1 : 1;
 }

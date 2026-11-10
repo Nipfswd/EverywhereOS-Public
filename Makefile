@@ -7,8 +7,18 @@ NASM    = nasm
 
 HOST_CC = gcc
 
-CFLAGS  = -c -ffreestanding -fno-builtin -fno-stack-protector -nostdlib \
-          -m32 -Wall -Wextra \
+CFLAGS  = -m32 -ffreestanding \
+          -fno-stack-protector \
+          -fno-leading-underscore \
+          -fshort-wchar \
+          -mgeneral-regs-only \
+          -mno-red-zone -c \
+          -fno-pic -fno-asynchronous-unwind-tables \
+          -fno-strict-aliasing -mno-sse -O2 \
+          -Wno-unused-parameter -Wno-unused-function \
+          -Wno-unused-variable \
+		  -Wno-unused-but-set-variable -Wno-unused-value \
+          -Wno-missing-field \
           -I./src/minkernel/ntos/inc \
           -I./src/minkernel/ntos/mm \
           -I./src/minkernel/boot/kdcom \
@@ -68,10 +78,13 @@ FS_SRC = src/minkernel/fs/evryfs/ata.c \
          src/minkernel/fs/evryfs/read.c \
          src/minkernel/fs/evryfs/write.c \
          src/minkernel/fs/evryfs/strsup.c
+
 HAL_SRC = src/minkernel/hals/halx86/halinit.c \
           src/minkernel/hals/halx86/power.c
+
 HAL_ASM_SRC = src/minkernel/hals/halx86/irq12.asm \
               src/minkernel/hals/halx86/i386/ixclock.asm
+
 HAL_ASM_OBJ = $(BUILD)/src/minkernel/hals/halx86/irq12.o \
               $(BUILD)/src/minkernel/hals/halx86/i386/ixclock.o
 
@@ -82,7 +95,8 @@ SHELL_SRC = src/shell/explorer/desktop.c \
             src/shell/explorer/snake.c \
             src/shell/explorer/input.c \
             src/shell/explorer/files.c \
-            src/shell/explorer/icon.c
+            src/shell/explorer/icon.c \
+            src/shell/explorer/regedit.c 
 
 KBDCLASS_SRC = src/onecore/drivers/input/keyboard/kbdclass/kbdclass.c
 MOUCLASS_SRC = src/onecore/drivers/input/mouse/mouclass/mouclass.c
@@ -91,18 +105,43 @@ MOUCLASS_SRC = src/onecore/drivers/input/mouse/mouclass/mouclass.c
 RTL_SRC = src/minkernel/ntos/rtl/movemem.c \
           src/minkernel/ntos/rtl/string.c \
           src/minkernel/ntos/rtl/bitmapex.c \
-          src/minkernel/ntos/rtl/random.c
+          src/minkernel/ntos/rtl/random.c \
+          src/minkernel/ntos/rtl/gentable.c \
+          src/minkernel/ntos/rtl/heap.c
 
 # Executive (src/minkernel/ntos/ex)
 EX_SRC = src/minkernel/ntos/ex/exinit.c \
          src/minkernel/ntos/ex/fmutex.c \
          src/minkernel/ntos/ex/lookasid.c \
-         src/minkernel/ntos/ex/luid.c
+         src/minkernel/ntos/ex/luid.c \
+         src/minkernel/ntos/ex/workitem.c
+
+# Object Manager (src/minkernel/ntos/ob)
+OB_SRC = src/minkernel/ntos/ob/obinit.c \
+         src/minkernel/ntos/ob/obtype.c \
+         src/minkernel/ntos/ob/obcreate.c \
+         src/minkernel/ntos/ob/obref.c
+
+# Input/Output
+IO_SRC = src/minkernel/ntos/io/iomgr/iofile.c \
+         src/minkernel/ntos/io/iomgr/ioread.c \
+         src/minkernel/ntos/io/iomgr/iowrite.c \
+         src/minkernel/ntos/io/iomgr/iodir.c \
+         src/minkernel/ntos/io/iomgr/iocreate.c
+
+# Power Manager
+PO_SRC = src/minkernel/ntos/po/poapi.c
+
+# Config Manager
+CM_SRC = src/minkernel/ntos/cm/cminit.c \
+         src/minkernel/ntos/cm/cmapi.c
 
 # Main entry
-MAIN_SRC = src/minkernel/ntos/init/kernel.c
+MAIN_SRC = src/minkernel/ntos/init/startup.c
 
-ALL_C_SRC = $(NTOS_SRC) $(KDCOM_SRC) $(MM_SRC) $(HAL_SRC) $(FS_SRC) $(SHELL_SRC) $(KBDCLASS_SRC) $(MOUCLASS_SRC) $(RTL_SRC) $(EX_SRC) $(MAIN_SRC)
+ALL_C_SRC = $(NTOS_SRC) $(KDCOM_SRC) $(MM_SRC) $(HAL_SRC) $(FS_SRC) $(SHELL_SRC) $(KBDCLASS_SRC) $(MOUCLASS_SRC) $(RTL_SRC) $(EX_SRC) $(MAIN_SRC) \
+            $(OB_SRC) $(IO_SRC) $(PO_SRC) $(CM_SRC)
+
 ALL_C_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(ALL_C_SRC))
 
 KERNEL_ELF = $(BUILD)/kernel.elf
@@ -125,6 +164,10 @@ $(shell mkdir -p $(BUILD)/src/minkernel/ntos/init)
 $(shell mkdir -p $(BUILD)/src/minkernel/ntos/ke)
 $(shell mkdir -p $(BUILD)/src/minkernel/ntos/rtl)
 $(shell mkdir -p $(BUILD)/src/minkernel/ntos/ex)
+$(shell mkdir -p $(BUILD)/src/minkernel/ntos/ob)
+$(shell mkdir -p $(BUILD)/src/minkernel/ntos/io/iomgr)
+$(shell mkdir -p $(BUILD)/src/minkernel/ntos/po)
+$(shell mkdir -p $(BUILD)/src/minkernel/ntos/cm)
 $(shell mkdir -p $(BUILD)/src/minkernel/boot/kdcom)
 $(shell mkdir -p $(BUILD)/src/minkernel/ntos/mm)
 $(shell mkdir -p $(BUILD)/src/minkernel/ntos/mm/tests)
@@ -136,7 +179,7 @@ $(shell mkdir -p $(BUILD)/src/onecore/drivers/input/mouse/mouclass)
 $(shell mkdir -p $(BIN))
 $(shell mkdir -p $(ISO)/boot/grub)
 
-all: $(OS_ISO)
+all: $(OS_ISO) $(DISK_IMG)
 
 $(ENTRY_OBJ): $(ENTRY_SRC)
 	$(NASM) $(ASFLAGS) $< -o $@
@@ -186,7 +229,7 @@ $(DISK_IMG): $(MKDISK_EXE) $(FOLDER_ICO)
 	$(MKDISK_EXE) $(FOLDER_ICO) $@
 
 run: $(OS_ISO) $(DISK_IMG)
-	qemu-system-i386 -cdrom $(OS_ISO) -hda $(DISK_IMG) #-full-screen
+	qemu-system-i386 -cdrom $(OS_ISO) -hda $(DISK_IMG) -vga vmware #-full-screen
 
 $(TEST_ENTRY_OBJ): $(TEST_ENTRY_SRC)
 	$(NASM) $(ASFLAGS) $< -o $@
@@ -213,6 +256,7 @@ $(TEST_ELF): $(TEST_ENTRY_OBJ) \
              $(BUILD)/src/minkernel/ntos/mm/hypermap.o \
              $(BUILD)/src/minkernel/ntos/mm/buildmdl.o \
              $(BUILD)/src/minkernel/ntos/mm/zeropage.o \
+             $(BUILD)/src/minkernel/ntos/rtl/heap.o \
              $(TEST_MMTEST_OBJ)
 	$(LD) $(LDFLAGS) $^ -o $@
 

@@ -8,12 +8,13 @@ Module Name:
 
 Abstract:
 
-    Shell command input and execution (clear, credits, snake, notes).
+    Shell command input and execution (clear, credits, snake, notes, files, mktest, reboot, regedit).
 
 Author:
 
     Noah Juopperi <nipfswd@gmail.com>
     Clay Sanders (made the first version of the kernel) <claylikepython@yahoo.com>
+    Vlad Lymar <ggcc98765432110@gmail.com>
 
 Environment:
 
@@ -22,11 +23,31 @@ Environment:
 --*/
 
 #include "explorer.h"
+#include "ex.h"
+#include "po.h"
 
 char shell_input[SHELL_INPUT_SIZE];
 int  shell_len = 0;
-char shell_output[64];
+char shell_output[256];
 int  shell_has_output = 0;
+
+VOID
+MkTestWorkerRoutine(
+    PVOID Parameter
+)
+{
+    static const uint8_t hello[] = "Hello, World!\n";
+    PVOID FileObject = NULL;
+    NTSTATUS Status;
+
+    (VOID)Parameter;
+
+    Status = NtCreateFile("Test\\hello.txt", hello, sizeof(hello) - 1, &FileObject);
+    
+    if (NT_SUCCESS(Status) && FileObject != NULL) {
+        NtCloseFile(FileObject);
+    }
+}
 
 /*++
 
@@ -67,16 +88,18 @@ Return Value:
 void ShellDraw(void) {
     if (!ShellWin.visible || ShellWin.minimized) return;
     DrawString(ShellWin.x + 4, ShellWin.y + 14, shell_input, 0x0F);
-    if (shell_has_output)
+    if (shell_has_output) {
         DrawString(ShellWin.x + 4, ShellWin.y + 24, shell_output, 0x0A);
+        ShellExec();
+    }
 }
 
 /*++
 
 Routine Description:
 
-    Executes the current shell command. Recognizes "clear", "credits",
-    "snake", and "notes".
+    Executes the current shell command. Recognizes "clear", "credits", "snake",
+    "notes", "files", "mktest", "reboot" and "regedit".
 
 Arguments:
 
@@ -93,11 +116,22 @@ void ShellExec(void) {
 
     shell_has_output = 0;
 
-    if (StrEq(shell_input, "clear")) {
+    if (StrEq(shell_input, "help")) {
+        const char* msg;
+        int i = 0;
+        msg = "Commands: clear, credits, snake,\nnotes, files, mktest, reboot, regedit\n";
+        while (msg[i] && i < 72) { shell_output[i] = msg[i]; i++; }
+        shell_output[i] = 0;
+        shell_has_output = 1;
+    } else if (StrEq(shell_input, "clear")) {
         ShellClear();
     } else if (StrEq(shell_input, "credits")) {
-        DrawString(ShellWin.x + 4, ShellWin.y + 24,
-                   "Clay Sanders, Noah Juopperi\n", 0x0F);
+        const char* msg;
+        int i = 0;
+        msg = "Clay Sanders, Noah Juopperi\nVlad Lymar\n";
+        while (msg[i] && i < 63) { shell_output[i] = msg[i]; i++; }
+        shell_output[i] = 0;
+        shell_has_output = 1;
     } else if (StrEq(shell_input, "snake")) {
         SnakeWin.visible = 1;
         SnakeWin.minimized = 0;
@@ -107,19 +141,32 @@ void ShellExec(void) {
     } else if (StrEq(shell_input, "files")) {
         FilesWin.visible = 1;
         FilesWin.minimized = 0;
+    } else if (StrEq(shell_input, "reboot")) {
+        NtShutdownSystem(PowerActionShutdownReset);
     } else if (StrEq(shell_input, "mktest")) {
-        static const uint8_t hello[] = "Hello, World!\n";
+        static WORK_QUEUE_ITEM TestWorkItem;
         const char* msg;
         int i = 0;
-        if (EvryFsWriteFile("hello.txt", hello, 14) == 0) {
-            msg = "Created hello.txt";
-        } else {
-            msg = "No disk found";
+
+        TestWorkItem.WorkerRoutine = MkTestWorkerRoutine;
+        TestWorkItem.Parameter = NULL;
+        TestWorkItem.List.Flink = NULL;
+        TestWorkItem.List.Blink = NULL;
+
+        ExQueueWorkItem(&TestWorkItem, DelayedWorkQueue);
+
+        msg = "Created Test\\hello.txt";
+
+        while (msg[i] && i < 63) { 
+            shell_output[i] = msg[i]; 
+            i++; 
         }
-        while (msg[i] && i < 63) { shell_output[i] = msg[i]; i++; }
         shell_output[i] = 0;
         shell_has_output = 1;
-    }
+    } else if (StrEq(shell_input, "regedit")) {
+        RegeditWin.visible = 1;
+        RegeditWin.minimized = 0;
+    } 
 
     shell_len = 0;
     shell_input[0] = 0;

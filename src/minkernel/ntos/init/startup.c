@@ -9,12 +9,13 @@ Module Name:
 Abstract:
 
     Main entry point for the GUI kernel. All subsystems are now split
-    into base\ntos\ke\* (kernel) and shell\explorer\* (userspace).
+    into src\minkernel\ntos\ke\* (kernel) and src\shell\explorer\* (userspace).
 
 Author(s):
 
     Noah Juopperi <nipfswd@gmail.com>
     Clay Sanders <claylikepython@yahoo.com>
+    Vlad Lymar <ggcc98765432110@gmail.com>
 
 Environment:
 
@@ -23,9 +24,15 @@ Environment:
 --*/
 
 #include "ke.h"
+#include "ob.h"
 #include "ex.h"
 #include "explorer.h"
 #include "evryfs.h"
+#include "cm.h"
+
+#define HEAP_SIZE (512 * 1024)
+
+static UCHAR SystemHeap[HEAP_SIZE];
 
 /*++
 
@@ -45,10 +52,13 @@ Return Value:
 
 --*/
 
-void kernelMain(uint32_t* mbi) {
+void KiStartupSystem(uint32_t* mbi) {
     KdComPortInitialize();
     MmInit(mbi);
+    RtlInitializeHeap(SystemHeap, HEAP_SIZE);
+    ObInitSystem();
     ExInitSystem();
+    CmInitSystem();
     SetupFramebuffer(mbi);
     InitFont();
     InitMouse();
@@ -56,8 +66,10 @@ void kernelMain(uint32_t* mbi) {
     SnakeInit();
     EvryFsInit();
     IconInit();
+    RegeditInit();
 
     DrawBootScreen();
+    FlipBuffers();
     {
         uint32_t BootEnd = KernelGetTickCount() + 2000;
         while (KernelGetTickCount() < BootEnd) {
@@ -69,11 +81,10 @@ void kernelMain(uint32_t* mbi) {
         uint32_t FrameStart = KernelGetTickCount();
         uint32_t FrameElapsed;
 
+        ExpProcessWorkItems();
+
         last_scancode = 0;
         char ch = KbdClassReadInput();
-        if (ch == 27) {
-            RebootSystem();
-        }
 
         /* Route keyboard input to the active window */
         HandleKeyboardInput(ch);
@@ -85,10 +96,13 @@ void kernelMain(uint32_t* mbi) {
         HandleWindowMouse(&NotesWin, 1);
         HandleWindowMouse(&SnakeWin, 2);
         HandleWindowMouse(&FilesWin, 3);
+        HandleWindowMouse(&RegeditWin, 4);
 
         /* Forward left-click-down events into the Files content area. */
-        if ((mouse_buttons & 1) && !(mouse_prev_buttons & 1))
+        if ((mouse_buttons & 1) && !(mouse_prev_buttons & 1)) {
             FilesHandleClick(mouse_x, mouse_y);
+            RegeditHandleClick(mouse_x, mouse_y);
+        }
 
         HandleTaskbarClick();
 
@@ -96,17 +110,30 @@ void kernelMain(uint32_t* mbi) {
         UpdateWindowPhysics(&NotesWin);
         UpdateWindowPhysics(&SnakeWin);
         UpdateWindowPhysics(&FilesWin);
+        UpdateWindowPhysics(&RegeditWin);
 
         DrawDesktop();
-        DrawWindowFrame(&ShellWin);
-        DrawWindowFrame(&NotesWin);
-        DrawWindowFrame(&SnakeWin);
-        DrawWindowFrame(&FilesWin);
 
-        ShellDraw();
-        NotesDraw();
-        SnakeDraw();
-        FilesDraw();
+        WINDOW* wins[5] = { &ShellWin, &NotesWin, &SnakeWin, &FilesWin, &RegeditWin };
+
+        WINDOW* active_p = wins[active_window];
+        int dest = 0;
+        for (int i = 0; i < 5; i++) {
+            if (i != active_window) {
+                wins[dest++] = wins[i];
+            }
+        }
+        wins[4] = active_p;
+
+        for (int i = 0; i < 5; i++) {
+            DrawWindowFrame(wins[i]);
+
+            if (wins[i] == &ShellWin) ShellDraw();
+            else if (wins[i] == &NotesWin) NotesDraw();
+            else if (wins[i] == &SnakeWin) SnakeDraw();
+            else if (wins[i] == &FilesWin) FilesDraw();
+            else if (wins[i] == &RegeditWin) RegeditDraw();
+        }
 
         DrawTaskbar();
         DrawMouseCursor();
